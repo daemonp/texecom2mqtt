@@ -7,21 +7,13 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/daemonp/texecom2mqtt/internal/panel"
 	"github.com/daemonp/texecom2mqtt/internal/types"
 )
 
 const cacheFileName = "texecom2mqtt_cache.json"
 
-type CacheData struct {
-	Device     types.Device `json:"device"`
-	Areas      []types.Area `json:"areas"`
-	Zones      []types.Zone `json:"zones"`
-	LastUpdate time.Time    `json:"last_update"`
-}
-
-func SaveCache(p *panel.Panel) error {
-	cacheData := CacheData{
+func SaveCache(p *types.Panel) error {
+	cacheData := types.CacheData{
 		Device:     p.GetDevice(),
 		Areas:      p.GetAreas(),
 		Zones:      p.GetZones(),
@@ -52,7 +44,7 @@ func SaveCache(p *panel.Panel) error {
 	return nil
 }
 
-func LoadCache() (*CacheData, error) {
+func LoadCache() (*types.CacheData, error) {
 	cacheDir, err := getCacheDir()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get cache directory: %v", err)
@@ -67,7 +59,7 @@ func LoadCache() (*CacheData, error) {
 		return nil, fmt.Errorf("failed to read cache file: %v", err)
 	}
 
-	var cacheData CacheData
+	var cacheData types.CacheData
 	err = json.Unmarshal(data, &cacheData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal cache data: %v", err)

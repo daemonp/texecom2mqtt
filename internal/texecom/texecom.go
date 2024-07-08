@@ -8,14 +8,15 @@ import (
 	"time"
 
 	"github.com/daemonp/texecom2mqtt/internal/log"
+	"github.com/daemonp/texecom2mqtt/internal/types"
 )
 
 type Texecom struct {
 	log            *log.Logger
 	conn           net.Conn
-	device         Device
-	areas          []Area
-	zones          []Zone
+	device         types.Device
+	areas          []types.Area
+	zones          []types.Zone
 	isLoggedIn     bool
 	mu             sync.Mutex
 	sequence       uint8
@@ -81,15 +82,15 @@ func (t *Texecom) Login(password string) error {
 	return nil
 }
 
-func (t *Texecom) GetPanelIdentification() (Device, error) {
+func (t *Texecom) GetPanelIdentification() (types.Device, error) {
 	cmd := []byte{0x16} // Get Panel Identification command
 	resp, err := t.sendCommand(cmd)
 	if err != nil {
-		return Device{}, fmt.Errorf("failed to get panel identification: %v", err)
+		return types.Device{}, fmt.Errorf("failed to get panel identification: %v", err)
 	}
 
 	// Parse the response to extract device information
-	device := Device{
+	device := types.Device{
 		Model:           string(resp[:20]),
 		SerialNumber:    string(resp[20:40]),
 		FirmwareVersion: string(resp[40:60]),
@@ -99,18 +100,18 @@ func (t *Texecom) GetPanelIdentification() (Device, error) {
 	return device, nil
 }
 
-func (t *Texecom) GetAllAreas() ([]Area, error) {
+func (t *Texecom) GetAllAreas() ([]types.Area, error) {
 	cmd := []byte{0x22} // Get Area Text command
 	resp, err := t.sendCommand(cmd)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get areas: %v", err)
 	}
 
-	var areas []Area
+	var areas []types.Area
 	for i := 0; i < len(resp); i += 16 {
 		areaNumber := i/16 + 1
 		areaName := string(resp[i : i+16])
-		areas = append(areas, Area{
+		areas = append(areas, types.Area{
 			Number: areaNumber,
 			Name:   areaName,
 			ID:     fmt.Sprintf("A%d", areaNumber),
@@ -120,19 +121,19 @@ func (t *Texecom) GetAllAreas() ([]Area, error) {
 	return areas, nil
 }
 
-func (t *Texecom) GetAllZones() ([]Zone, error) {
+func (t *Texecom) GetAllZones() ([]types.Zone, error) {
 	cmd := []byte{0x03} // Get Zone Details command
 	resp, err := t.sendCommand(cmd)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get zones: %v", err)
 	}
 
-	var zones []Zone
+	var zones []types.Zone
 	for i := 0; i < len(resp); i += 32 {
 		zoneNumber := i/32 + 1
 		zoneName := string(resp[i : i+16])
-		zoneType := ZoneType(resp[i+16])
-		zones = append(zones, Zone{
+		zoneType := types.ZoneType(resp[i+16])
+		zones = append(zones, types.Zone{
 			Number: zoneNumber,
 			Name:   zoneName,
 			Type:   zoneType,
@@ -143,32 +144,32 @@ func (t *Texecom) GetAllZones() ([]Zone, error) {
 	return zones, nil
 }
 
-func (t *Texecom) GetZoneStates() ([]ZoneState, error) {
+func (t *Texecom) GetZoneStates() ([]types.ZoneState, error) {
 	cmd := []byte{0x02} // Get Zone State command
 	resp, err := t.sendCommand(cmd)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get zone states: %v", err)
 	}
 
-	var states []ZoneState
+	var states []types.ZoneState
 	for _, b := range resp {
-		states = append(states, ZoneState(b&0x03))
+		states = append(states, types.ZoneState(b&0x03))
 	}
 
 	return states, nil
 }
 
-func (t *Texecom) GetAreaStates() ([]AreaStatus, error) {
+func (t *Texecom) GetAreaStates() ([]types.AreaStatus, error) {
 	cmd := []byte{0x0B} // Get Area Flags command
 	resp, err := t.sendCommand(cmd)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get area states: %v", err)
 	}
 
-	var states []AreaStatus
+	var states []types.AreaStatus
 	for i := 0; i < len(resp); i += 8 {
 		flags := binary.LittleEndian.Uint64(resp[i : i+8])
-		status := AreaStatus{
+		status := types.AreaStatus{
 			Status:  t.parseAreaState(flags),
 			PartArm: t.parsePartArm(flags),
 		}
@@ -178,7 +179,7 @@ func (t *Texecom) GetAreaStates() ([]AreaStatus, error) {
 	return states, nil
 }
 
-func (t *Texecom) Arm(areaNumber int, armType ArmType) error {
+func (t *Texecom) Arm(areaNumber int, armType types.ArmType) error {
 	cmd := []byte{0x06, byte(areaNumber), byte(armType)} // Arm Area command
 	resp, err := t.sendCommand(cmd)
 	if err != nil {
@@ -348,28 +349,28 @@ func (t *Texecom) parseEvent(data []byte) interface{} {
 	}
 }
 
-func (t *Texecom) parseZoneEvent(data []byte) ZoneEvent {
-	return ZoneEvent{
+func (t *Texecom) parseZoneEvent(data []byte) types.ZoneEvent {
+	return types.ZoneEvent{
 		ZoneNumber: int(binary.LittleEndian.Uint16(data[:2])),
-		ZoneState:  ZoneState(data[2] & 0x03),
+		ZoneState:  types.ZoneState(data[2] & 0x03),
 	}
 }
 
-func (t *Texecom) parseAreaEvent(data []byte) AreaEvent {
-	return AreaEvent{
+func (t *Texecom) parseAreaEvent(data []byte) types.AreaEvent {
+	return types.AreaEvent{
 		AreaNumber: int(data[0]),
-		AreaState:  AreaState(data[1]),
+		AreaState:  types.AreaState(data[1]),
 	}
 }
 
-func (t *Texecom) parseLogEvent(data []byte) LogEvent {
-	return LogEvent{
-		Type:        LogEventType(data[0]),
-		GroupType:   LogEventGroupType(data[1]),
+func (t *Texecom) parseLogEvent(data []byte) types.LogEvent {
+	return types.LogEvent{
+		Type:        types.LogEventType(data[0]),
+		GroupType:   types.LogEventGroupType(data[1]),
 		Parameter:   binary.LittleEndian.Uint16(data[2:4]),
 		Areas:       binary.LittleEndian.Uint16(data[4:6]),
 		Time:        t.parseTimestamp(data[6:10]),
-		Description: t.getLogEventDescription(LogEventType(data[0])),
+		Description: t.getLogEventDescription(types.LogEventType(data[0])),
 	}
 }
 
@@ -385,14 +386,14 @@ func (t *Texecom) parseTimestamp(data []byte) time.Time {
 	return time.Date(int(year), time.Month(month), int(day), int(hours), int(minutes), int(seconds), 0, time.UTC)
 }
 
-func (t *Texecom) parseAreaState(flags uint64) AreaState {
+func (t *Texecom) parseAreaState(flags uint64) types.AreaState {
 	if flags&(1<<0) != 0 {
-		return AreaStateInAlarm
+		return types.AreaStateInAlarm
 	}
 	if flags&(1<<21) != 0 || flags&(1<<22) != 0 || flags&(1<<23) != 0 {
-		return AreaStateArmed
+		return types.AreaStateArmed
 	}
-	return AreaStateDisarmed
+	return types.AreaStateDisarmed
 }
 
 func (t *Texecom) parsePartArm(flags uint64) int {
@@ -423,45 +424,45 @@ func (t *Texecom) calculateCRC(data []byte) byte {
 	return crc
 }
 
-func (t *Texecom) getLogEventDescription(eventType LogEventType) string {
+func (t *Texecom) getLogEventDescription(eventType types.LogEventType) string {
 	switch eventType {
-	case LogEventTypeEntryExit1:
+	case types.LogEventTypeEntryExit1:
 		return "Entry/Exit 1"
-	case LogEventTypeEntryExit2:
+	case types.LogEventTypeEntryExit2:
 		return "Entry/Exit 2"
-	case LogEventTypeGuard:
+	case types.LogEventTypeGuard:
 		return "Guard"
-	case LogEventTypeGuardAccess:
+	case types.LogEventTypeGuardAccess:
 		return "Guard Access"
-	case LogEventTwentyFourHourAudible:
+	case types.LogEventTwentyFourHourAudible:
 		return "24hr Audible"
-	case LogEventTwentyFourHourSilent:
+	case types.LogEventTwentyFourHourSilent:
 		return "24hr Silent"
-	case LogEventPAAudible:
+	case types.LogEventPAAudible:
 		return "PA Audible"
-	case LogEventPASilent:
+	case types.LogEventPASilent:
 		return "PA Silent"
-	case LogEventFire:
+	case types.LogEventFire:
 		return "Fire Alarm"
-	case LogEventMedical:
+	case types.LogEventMedical:
 		return "Medical"
-	case LogEventTwentyFourHourGas:
+	case types.LogEventTwentyFourHourGas:
 		return "24Hr Gas Alarm"
-	case LogEventAuxiliary:
+	case types.LogEventAuxiliary:
 		return "Auxiliary Alarm"
-	case LogEventTamper:
+	case types.LogEventTamper:
 		return "24hr Tamper Alarm"
-	case LogEventExitTerminator:
+	case types.LogEventExitTerminator:
 		return "Exit Terminator"
-	case LogEventMomentKey:
+	case types.LogEventMomentKey:
 		return "Keyswitch - Momentary"
-	case LogEventLatchKey:
+	case types.LogEventLatchKey:
 		return "Keyswitch - Latching"
-	case LogEventSecurity:
+	case types.LogEventSecurity:
 		return "Security Key"
-	case LogEventOmitKey:
+	case types.LogEventOmitKey:
 		return "Omit Key"
-	case LogEventCustom:
+	case types.LogEventCustom:
 		return "Custom Alarm"
 	// Add more cases for other log event types
 	default:
@@ -469,35 +470,35 @@ func (t *Texecom) getLogEventDescription(eventType LogEventType) string {
 	}
 }
 
-func (t *Texecom) getZoneTypeDescription(zoneType ZoneType) string {
+func (t *Texecom) getZoneTypeDescription(zoneType types.ZoneType) string {
 	switch zoneType {
-	case ZoneTypeNotUsed:
+	case types.ZoneTypeNotUsed:
 		return "Not used"
-	case ZoneTypeEntryExit1:
+	case types.ZoneTypeEntryExit1:
 		return "Entry/Exit 1"
-	case ZoneTypeEntryExit2:
+	case types.ZoneTypeEntryExit2:
 		return "Entry/Exit 2"
-	case ZoneTypeGuard:
+	case types.ZoneTypeGuard:
 		return "Guard"
-	case ZoneTypeGuardAccess:
+	case types.ZoneTypeGuardAccess:
 		return "Guard Access"
-	case ZoneTypeTwentyFourHourAudible:
+	case types.ZoneTypeTwentyFourHourAudible:
 		return "24Hr Audible"
-	case ZoneTypeTwentyFourHourSilent:
+	case types.ZoneTypeTwentyFourHourSilent:
 		return "24Hr Silent"
-	case ZoneTypePAAudible:
+	case types.ZoneTypePAAudible:
 		return "PA Audible"
-	case ZoneTypePASilent:
+	case types.ZoneTypePASilent:
 		return "PA Silent"
-	case ZoneTypeFire:
+	case types.ZoneTypeFire:
 		return "Fire"
-	case ZoneTypeMedical:
+	case types.ZoneTypeMedical:
 		return "Medical"
-	case ZoneTypeTwentyFourHourGas:
+	case types.ZoneTypeTwentyFourHourGas:
 		return "24Hr Gas"
-	case ZoneTypeAuxiliary:
+	case types.ZoneTypeAuxiliary:
 		return "Auxiliary"
-	case ZoneTypeTamper:
+	case types.ZoneTypeTamper:
 		return "Tamper"
 	// Add more cases for other zone types
 	default:
@@ -505,51 +506,51 @@ func (t *Texecom) getZoneTypeDescription(zoneType ZoneType) string {
 	}
 }
 
-func (t *Texecom) getZoneStateDescription(zoneState ZoneState) string {
+func (t *Texecom) getZoneStateDescription(zoneState types.ZoneState) string {
 	switch zoneState {
-	case ZoneStateSecure:
+	case types.ZoneStateSecure:
 		return "Secure"
-	case ZoneStateActive:
+	case types.ZoneStateActive:
 		return "Active"
-	case ZoneStateTampered:
+	case types.ZoneStateTampered:
 		return "Tampered"
-	case ZoneStateShort:
+	case types.ZoneStateShort:
 		return "Short"
 	default:
 		return fmt.Sprintf("Unknown Zone State: %d", zoneState)
 	}
 }
 
-func (t *Texecom) getAreaStateDescription(areaState AreaState) string {
+func (t *Texecom) getAreaStateDescription(areaState types.AreaState) string {
 	switch areaState {
-	case AreaStateDisarmed:
+	case types.AreaStateDisarmed:
 		return "Disarmed"
-	case AreaStateInExit:
+	case types.AreaStateInExit:
 		return "In Exit"
-	case AreaStateInEntry:
+	case types.AreaStateInEntry:
 		return "In Entry"
-	case AreaStateArmed:
+	case types.AreaStateArmed:
 		return "Armed"
-	case AreaStatePartArmed:
+	case types.AreaStatePartArmed:
 		return "Part Armed"
-	case AreaStateInAlarm:
+	case types.AreaStateInAlarm:
 		return "In Alarm"
 	default:
 		return fmt.Sprintf("Unknown Area State: %d", areaState)
 	}
 }
 
-func (t *Texecom) logZoneEvent(event ZoneEvent) {
+func (t *Texecom) logZoneEvent(event types.ZoneEvent) {
 	zoneState := t.getZoneStateDescription(event.ZoneState)
 	t.log.Info("Zone %d state changed to %s", event.ZoneNumber, zoneState)
 }
 
-func (t *Texecom) logAreaEvent(event AreaEvent) {
+func (t *Texecom) logAreaEvent(event types.AreaEvent) {
 	areaState := t.getAreaStateDescription(event.AreaState)
 	t.log.Info("Area %d state changed to %s", event.AreaNumber, areaState)
 }
 
-func (t *Texecom) logLogEvent(event LogEvent) {
+func (t *Texecom) logLogEvent(event types.LogEvent) {
 	t.log.Info("Log Event: %s (Type: %d, Group: %d, Parameter: %d, Areas: %d, Time: %s)",
 		event.Description, event.Type, event.GroupType, event.Parameter, event.Areas, event.Time)
 }

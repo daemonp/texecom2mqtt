@@ -1,9 +1,6 @@
 package types
 
-import (
-	"fmt"
-	"time"
-)
+import "time"
 
 type Device struct {
 	Model           string
@@ -53,6 +50,22 @@ type LogEvent struct {
 	Description string
 }
 
+type CacheData struct {
+	Device     Device    `json:"device"`
+	Areas      []Area    `json:"areas"`
+	Zones      []Zone    `json:"zones"`
+	LastUpdate time.Time `json:"last_update"`
+}
+
+type ArmType int
+
+const (
+	ArmTypeFull ArmType = iota
+	ArmTypePartArm1
+	ArmTypePartArm2
+	ArmTypePartArm3
+)
+
 type ZoneType int
 
 const (
@@ -72,41 +85,6 @@ const (
 	ZoneTypeTamper
 )
 
-func (z ZoneType) String() string {
-	switch z {
-	case ZoneTypeNotUsed:
-		return "Not used"
-	case ZoneTypeEntryExit1:
-		return "Entry/Exit 1"
-	case ZoneTypeEntryExit2:
-		return "Entry/Exit 2"
-	case ZoneTypeGuard:
-		return "Guard"
-	case ZoneTypeGuardAccess:
-		return "Guard Access"
-	case ZoneTypeTwentyFourHourAudible:
-		return "24Hr Audible"
-	case ZoneTypeTwentyFourHourSilent:
-		return "24Hr Silent"
-	case ZoneTypePAAudible:
-		return "PA Audible"
-	case ZoneTypePASilent:
-		return "PA Silent"
-	case ZoneTypeFire:
-		return "Fire"
-	case ZoneTypeMedical:
-		return "Medical"
-	case ZoneTypeTwentyFourHourGas:
-		return "24Hr Gas"
-	case ZoneTypeAuxiliary:
-		return "Auxiliary"
-	case ZoneTypeTamper:
-		return "Tamper"
-	default:
-		return fmt.Sprintf("Unknown ZoneType(%d)", z)
-	}
-}
-
 type ZoneState int
 
 const (
@@ -115,21 +93,6 @@ const (
 	ZoneStateTampered
 	ZoneStateShort
 )
-
-func (z ZoneState) String() string {
-	switch z {
-	case ZoneStateSecure:
-		return "Secure"
-	case ZoneStateActive:
-		return "Active"
-	case ZoneStateTampered:
-		return "Tampered"
-	case ZoneStateShort:
-		return "Short"
-	default:
-		return fmt.Sprintf("Unknown ZoneState(%d)", z)
-	}
-}
 
 type AreaState int
 
@@ -141,49 +104,6 @@ const (
 	AreaStatePartArmed
 	AreaStateInAlarm
 )
-
-func (a AreaState) String() string {
-	switch a {
-	case AreaStateDisarmed:
-		return "Disarmed"
-	case AreaStateInExit:
-		return "In Exit"
-	case AreaStateInEntry:
-		return "In Entry"
-	case AreaStateArmed:
-		return "Armed"
-	case AreaStatePartArmed:
-		return "Part Armed"
-	case AreaStateInAlarm:
-		return "In Alarm"
-	default:
-		return fmt.Sprintf("Unknown AreaState(%d)", a)
-	}
-}
-
-type ArmType int
-
-const (
-	ArmTypeFull ArmType = iota
-	ArmTypePartArm1
-	ArmTypePartArm2
-	ArmTypePartArm3
-)
-
-func (a ArmType) String() string {
-	switch a {
-	case ArmTypeFull:
-		return "Full Arm"
-	case ArmTypePartArm1:
-		return "Part Arm 1"
-	case ArmTypePartArm2:
-		return "Part Arm 2"
-	case ArmTypePartArm3:
-		return "Part Arm 3"
-	default:
-		return fmt.Sprintf("Unknown ArmType(%d)", a)
-	}
-}
 
 type LogEventType int
 

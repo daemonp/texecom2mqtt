@@ -120,16 +120,16 @@ func (p *Panel) handleEvent(event interface{}) {
 	defer p.mu.Unlock()
 
 	switch e := event.(type) {
-	case texecom.ZoneEvent:
+	case types.ZoneEvent:
 		p.handleZoneEvent(e)
-	case texecom.AreaEvent:
+	case types.AreaEvent:
 		p.handleAreaEvent(e)
-	case texecom.LogEvent:
+	case types.LogEvent:
 		p.handleLogEvent(e)
 	}
 }
 
-func (p *Panel) handleZoneEvent(event texecom.ZoneEvent) {
+func (p *Panel) handleZoneEvent(event types.ZoneEvent) {
 	for i, zone := range p.zones {
 		if zone.Number == event.ZoneNumber {
 			p.zones[i].Status = event.ZoneState
@@ -139,11 +139,11 @@ func (p *Panel) handleZoneEvent(event texecom.ZoneEvent) {
 	}
 }
 
-func (p *Panel) handleAreaEvent(event texecom.AreaEvent) {
+func (p *Panel) handleAreaEvent(event types.AreaEvent) {
 	for i, area := range p.areas {
 		if area.Number == event.AreaNumber {
 			p.areas[i].Status = event.AreaState
-			if event.AreaState == texecom.AreaStatePartArmed {
+			if event.AreaState == types.AreaStatePartArmed {
 				p.areas[i].PartArm = event.PartArm
 			}
 			p.log.Info("Area %s (%d) status changed to %s", area.Name, area.Number, event.AreaState)
@@ -152,7 +152,7 @@ func (p *Panel) handleAreaEvent(event texecom.AreaEvent) {
 	}
 }
 
-func (p *Panel) handleLogEvent(event texecom.LogEvent) {
+func (p *Panel) handleLogEvent(event types.LogEvent) {
 	p.log.Panel("Log event: %s", event.Description)
 }
 
@@ -196,15 +196,15 @@ func (p *Panel) updateAreaStates() error {
 	return nil
 }
 
-func (p *Panel) Arm(area texecom.Area, armType texecom.ArmType) error {
+func (p *Panel) Arm(area types.Area, armType types.ArmType) error {
 	return p.texecom.Arm(area.Number, armType)
 }
 
-func (p *Panel) Disarm(area texecom.Area) error {
+func (p *Panel) Disarm(area types.Area) error {
 	return p.texecom.Disarm(area.Number)
 }
 
-func (p *Panel) Reset(area texecom.Area) error {
+func (p *Panel) Reset(area types.Area) error {
 	return p.texecom.Reset(area.Number)
 }
 
@@ -216,25 +216,25 @@ func (p *Panel) SetLCDDisplay(text string) error {
 	return p.texecom.SetLCDDisplay(text)
 }
 
-func (p *Panel) GetAreas() []texecom.Area {
+func (p *Panel) GetAreas() []types.Area {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	return p.areas
 }
 
-func (p *Panel) GetZones() []texecom.Zone {
+func (p *Panel) GetZones() []types.Zone {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	return p.zones
 }
 
-func (p *Panel) GetDevice() texecom.Device {
+func (p *Panel) GetDevice() types.Device {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	return p.device
 }
 
-func (p *Panel) SetCachedData(data *CacheData) {
+func (p *Panel) SetCachedData(data *types.CacheData) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.device = data.Device
@@ -242,10 +242,10 @@ func (p *Panel) SetCachedData(data *CacheData) {
 	p.zones = data.Zones
 }
 
-func (p *Panel) GetCacheableData() *CacheData {
+func (p *Panel) GetCacheableData() *types.CacheData {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	return &CacheData{
+	return &types.CacheData{
 		Device: p.device,
 		Areas:  p.areas,
 		Zones:  p.zones,
@@ -256,10 +256,4 @@ func (p *Panel) Disconnect() {
 	p.log.Info("Disconnecting from panel...")
 	p.texecom.Disconnect()
 	p.log.Info("Disconnected from panel")
-}
-
-type CacheData struct {
-	Device texecom.Device
-	Areas  []texecom.Area
-	Zones  []texecom.Zone
 }

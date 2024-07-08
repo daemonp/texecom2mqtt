@@ -3,11 +3,12 @@ package texecom
 import (
 	"encoding/binary"
 	"time"
+
+	"github.com/daemonp/texecom2mqtt/internal/types"
 )
 
-// ZoneBitmapData represents the parsed data from a zone bitmap
 type ZoneBitmapData struct {
-	State          ZoneState
+	State          types.ZoneState
 	Fault          bool
 	FailedTest     bool
 	Alarmed        bool
@@ -16,10 +17,9 @@ type ZoneBitmapData struct {
 	Masked         bool
 }
 
-// ParseZoneBitmap parses a zone bitmap and returns a struct with the parsed data
 func ParseZoneBitmap(zoneBitmap byte) ZoneBitmapData {
 	return ZoneBitmapData{
-		State:          ZoneState(zoneBitmap & 0x3),
+		State:          types.ZoneState(zoneBitmap & 0x3),
 		Fault:          (zoneBitmap & (1 << 2)) != 0,
 		FailedTest:     (zoneBitmap & (1 << 3)) != 0,
 		Alarmed:        (zoneBitmap & (1 << 4)) != 0,
@@ -29,12 +29,10 @@ func ParseZoneBitmap(zoneBitmap byte) ZoneBitmapData {
 	}
 }
 
-// CalculateAreaSize calculates the size of the area bitmap based on the number of zones
 func CalculateAreaSize(numberOfZones int) int {
 	return (numberOfZones + 7) / 8
 }
 
-// CalculateZoneNumberSize calculates the size of the zone number field based on the number of zones
 func CalculateZoneNumberSize(numberOfZones int) int {
 	if numberOfZones > 256 {
 		return 2
@@ -42,8 +40,7 @@ func CalculateZoneNumberSize(numberOfZones int) int {
 	return 1
 }
 
-// CreateArmInput creates the input for the Arm command
-func CreateArmInput(numberOfZones, area int, armType ArmType) []byte {
+func CreateArmInput(numberOfZones, area int, armType types.ArmType) []byte {
 	size := CalculateAreaSize(numberOfZones)
 	buffer := make([]byte, size+1)
 	buffer[0] = byte(armType)
@@ -51,7 +48,6 @@ func CreateArmInput(numberOfZones, area int, armType ArmType) []byte {
 	return buffer
 }
 
-// CreateDisarmOrResetInput creates the input for the Disarm or Reset command
 func CreateDisarmOrResetInput(numberOfZones, area int) []byte {
 	size := CalculateAreaSize(numberOfZones)
 	buffer := make([]byte, size)
@@ -59,7 +55,6 @@ func CreateDisarmOrResetInput(numberOfZones, area int) []byte {
 	return buffer
 }
 
-// WriteAreaBitmapToBuffer writes the area bitmap to the given buffer
 func WriteAreaBitmapToBuffer(size, area int, buffer []byte, offset int) {
 	if size == 8 {
 		bitmap := uint64(1) << uint(area)
@@ -70,7 +65,6 @@ func WriteAreaBitmapToBuffer(size, area int, buffer []byte, offset int) {
 	}
 }
 
-// ParseTimestamp parses a Texecom timestamp and returns a time.Time
 func ParseTimestamp(data []byte) time.Time {
 	timestamp := binary.LittleEndian.Uint32(data)
 	seconds := timestamp & 63
@@ -83,7 +77,6 @@ func ParseTimestamp(data []byte) time.Time {
 	return time.Date(int(year), time.Month(month), int(day), int(hours), int(minutes), int(seconds), 0, time.UTC)
 }
 
-// CreateSetDateInput creates the input for the SetDate command
 func CreateSetDateInput(date time.Time) []byte {
 	return []byte{
 		byte(date.Day()),
@@ -95,7 +88,6 @@ func CreateSetDateInput(date time.Time) []byte {
 	}
 }
 
-// CreateSetLCDDisplayInput creates the input for the SetLCDDisplay command
 func CreateSetLCDDisplayInput(text string) []byte {
 	if len(text) > 32 {
 		text = text[:32]

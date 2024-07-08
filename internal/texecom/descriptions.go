@@ -1,79 +1,76 @@
 package texecom
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/daemonp/texecom2mqtt/internal/types"
+)
 
-// ArmTypeDescriptions maps ArmType to its string description
-var ArmTypeDescriptions = map[ArmType]string{
-	ArmTypeFull:     "Full Arm",
-	ArmTypePartArm1: "Part Arm 1",
-	ArmTypePartArm2: "Part Arm 2",
-	ArmTypePartArm3: "Part Arm 3",
+var ArmTypeDescriptions = map[types.ArmType]string{
+	types.ArmTypeFull:     "Full Arm",
+	types.ArmTypePartArm1: "Part Arm 1",
+	types.ArmTypePartArm2: "Part Arm 2",
+	types.ArmTypePartArm3: "Part Arm 3",
 }
 
-// AreaStateDescriptions maps AreaState to its string description
-var AreaStateDescriptions = map[AreaState]string{
-	AreaStateDisarmed:  "Disarmed",
-	AreaStateInExit:    "In Exit",
-	AreaStateInEntry:   "In Entry",
-	AreaStateArmed:     "Armed",
-	AreaStatePartArmed: "Part Armed",
-	AreaStateInAlarm:   "In Alarm",
+var AreaStateDescriptions = map[types.AreaState]string{
+	types.AreaStateDisarmed:  "Disarmed",
+	types.AreaStateInExit:    "In Exit",
+	types.AreaStateInEntry:   "In Entry",
+	types.AreaStateArmed:     "Armed",
+	types.AreaStatePartArmed: "Part Armed",
+	types.AreaStateInAlarm:   "In Alarm",
 }
 
-// ZoneStateDescriptions maps ZoneState to its string description
-var ZoneStateDescriptions = map[ZoneState]string{
-	ZoneStateSecure:   "Secure",
-	ZoneStateActive:   "Active",
-	ZoneStateTampered: "Tampered",
-	ZoneStateShort:    "Short",
+var ZoneStateDescriptions = map[types.ZoneState]string{
+	types.ZoneStateSecure:   "Secure",
+	types.ZoneStateActive:   "Active",
+	types.ZoneStateTampered: "Tampered",
+	types.ZoneStateShort:    "Short",
 }
 
-// ZoneTypeDescriptions maps ZoneType to its string description
-var ZoneTypeDescriptions = map[ZoneType]string{
-	ZoneTypeNotUsed:               "Not used",
-	ZoneTypeEntryExit1:            "Entry/Exit 1",
-	ZoneTypeEntryExit2:            "Entry/Exit 2",
-	ZoneTypeGuard:                 "Guard",
-	ZoneTypeGuardAccess:           "Guard Access",
-	ZoneTypeTwentyFourHourAudible: "24Hr Audible",
-	ZoneTypeTwentyFourHourSilent:  "24Hr Silent",
-	ZoneTypePAAudible:             "PA Audible",
-	ZoneTypePASilent:              "PA Silent",
-	ZoneTypeFire:                  "Fire",
-	ZoneTypeMedical:               "Medical",
-	ZoneTypeTwentyFourHourGas:     "24Hr Gas",
-	ZoneTypeAuxiliary:             "Auxiliary",
-	ZoneTypeTamper:                "Tamper",
+var ZoneTypeDescriptions = map[types.ZoneType]string{
+	types.ZoneTypeNotUsed:               "Not used",
+	types.ZoneTypeEntryExit1:            "Entry/Exit 1",
+	types.ZoneTypeEntryExit2:            "Entry/Exit 2",
+	types.ZoneTypeGuard:                 "Guard",
+	types.ZoneTypeGuardAccess:           "Guard Access",
+	types.ZoneTypeTwentyFourHourAudible: "24Hr Audible",
+	types.ZoneTypeTwentyFourHourSilent:  "24Hr Silent",
+	types.ZoneTypePAAudible:             "PA Audible",
+	types.ZoneTypePASilent:              "PA Silent",
+	types.ZoneTypeFire:                  "Fire",
+	types.ZoneTypeMedical:               "Medical",
+	types.ZoneTypeTwentyFourHourGas:     "24Hr Gas",
+	types.ZoneTypeAuxiliary:             "Auxiliary",
+	types.ZoneTypeTamper:                "Tamper",
 }
 
-// LogEventTypeDescriptions maps LogEventType to its string description
-var LogEventTypeDescriptions = map[LogEventType]string{
-	LogEventTypeEntryExit1:        "Entry/Exit 1",
-	LogEventTypeEntryExit2:        "Entry/Exit 2",
-	LogEventTypeGuard:             "Guard",
-	LogEventTypeGuardAccess:       "Guard Access",
-	LogEventTwentyFourHourAudible: "24hr Audible",
-	LogEventTwentyFourHourSilent:  "24hr Silent",
-	LogEventPAAudible:             "PA Audible",
-	LogEventPASilent:              "PA Silent",
-	LogEventFire:                  "Fire Alarm",
-	LogEventMedical:               "Medical",
-	LogEventTwentyFourHourGas:     "24Hr Gas Alarm",
-	LogEventAuxiliary:             "Auxiliary Alarm",
-	LogEventTamper:                "24hr Tamper Alarm",
-	LogEventExitTerminator:        "Exit Terminator",
-	LogEventMomentKey:             "Keyswitch - Momentary",
-	LogEventLatchKey:              "Keyswitch - Latching",
-	LogEventSecurity:              "Security Key",
-	LogEventOmitKey:               "Omit Key",
-	LogEventCustom:                "Custom Alarm",
+var LogEventTypeDescriptions = map[types.LogEventType]string{
+	types.LogEventTypeEntryExit1:        "Entry/Exit 1",
+	types.LogEventTypeEntryExit2:        "Entry/Exit 2",
+	types.LogEventTypeGuard:             "Guard",
+	types.LogEventTypeGuardAccess:       "Guard Access",
+	types.LogEventTwentyFourHourAudible: "24hr Audible",
+	types.LogEventTwentyFourHourSilent:  "24hr Silent",
+	types.LogEventPAAudible:             "PA Audible",
+	types.LogEventPASilent:              "PA Silent",
+	types.LogEventFire:                  "Fire Alarm",
+	types.LogEventMedical:               "Medical",
+	types.LogEventTwentyFourHourGas:     "24Hr Gas Alarm",
+	types.LogEventAuxiliary:             "Auxiliary Alarm",
+	types.LogEventTamper:                "24hr Tamper Alarm",
+	types.LogEventExitTerminator:        "Exit Terminator",
+	types.LogEventMomentKey:             "Keyswitch - Momentary",
+	types.LogEventLatchKey:              "Keyswitch - Latching",
+	types.LogEventSecurity:              "Security Key",
+	types.LogEventOmitKey:               "Omit Key",
+	types.LogEventCustom:                "Custom Alarm",
 	// Add more cases for other log event types
 }
 
-// GetAreaStatus returns a string description of the area status
-func GetAreaStatus(area Area) string {
+func GetAreaStatus(area types.Area) string {
 	status := AreaStateDescriptions[area.Status]
-	if area.Status == AreaStatePartArmed {
+	if area.Status == types.AreaStatePartArmed {
 		return fmt.Sprintf("%s %d", status, area.PartArm)
 	}
 	return status
