@@ -74,14 +74,15 @@ func main() {
 
 	// Save cache if enabled
 	if cfg.Cache {
-		cacheData := p.GetCacheableData()
-		if err := cache.SaveCache(cacheData); err != nil {
+		device := p.GetDevice()
+		areas := p.GetAreas()
+		zones := p.GetZones()
+		if err := cache.SaveCache(device, areas, zones); err != nil {
 			logger.Warning("Failed to save cache: %v", err)
 		} else {
 			logger.Info("Saved data to cache")
 		}
 	}
-
 	// Connect to MQTT broker
 	if err := mqttClient.Connect(); err != nil {
 		logger.Error("Failed to connect to MQTT broker: %v", err)
