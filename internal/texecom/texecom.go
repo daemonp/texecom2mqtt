@@ -13,6 +13,10 @@ import (
 type Texecom struct {
 	log            *log.Logger
 	conn           net.Conn
+	device         Device
+	areas          []Area
+	zones          []Zone
+	isLoggedIn     bool
 	mu             sync.Mutex
 	sequence       uint8
 	eventChan      chan interface{}

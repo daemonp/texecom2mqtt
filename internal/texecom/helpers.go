@@ -5,6 +5,17 @@ import (
 	"time"
 )
 
+// ZoneBitmapData represents the parsed data from a zone bitmap
+type ZoneBitmapData struct {
+	State          ZoneState
+	Fault          bool
+	FailedTest     bool
+	Alarmed        bool
+	ManualBypassed bool
+	AutoBypassed   bool
+	Masked         bool
+}
+
 // ParseZoneBitmap parses a zone bitmap and returns a struct with the parsed data
 func ParseZoneBitmap(zoneBitmap byte) ZoneBitmapData {
 	return ZoneBitmapData{

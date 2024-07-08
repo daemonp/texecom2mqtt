@@ -1,7 +1,8 @@
-package texecom
+package panel
 
 import "time"
 
+// Device represents the Texecom device information.
 type Device struct {
 	Model           string
 	SerialNumber    string
@@ -9,6 +10,7 @@ type Device struct {
 	Zones           int
 }
 
+// Area represents an area in the Texecom system.
 type Area struct {
 	Number  int
 	Name    string
@@ -17,6 +19,7 @@ type Area struct {
 	PartArm int
 }
 
+// Zone represents a zone in the Texecom system.
 type Zone struct {
 	Number int
 	Name   string
@@ -25,22 +28,26 @@ type Zone struct {
 	Status ZoneState
 }
 
+// AreaStatus represents the status of an area.
 type AreaStatus struct {
 	Status  AreaState
 	PartArm int
 }
 
+// ZoneEvent represents an event related to a zone.
 type ZoneEvent struct {
 	ZoneNumber int
 	ZoneState  ZoneState
 }
 
+// AreaEvent represents an event related to an area.
 type AreaEvent struct {
 	AreaNumber int
 	AreaState  AreaState
 	PartArm    int
 }
 
+// LogEvent represents a log event in the Texecom system.
 type LogEvent struct {
 	Type        LogEventType
 	GroupType   LogEventGroupType
@@ -50,6 +57,7 @@ type LogEvent struct {
 	Description string
 }
 
+// ZoneType represents the type of a zone.
 type ZoneType int
 
 const (
@@ -70,6 +78,7 @@ const (
 	// Add more zone types as needed
 )
 
+// ZoneState represents the state of a zone.
 type ZoneState int
 
 const (
@@ -79,6 +88,7 @@ const (
 	ZoneStateShort
 )
 
+// AreaState represents the state of an area.
 type AreaState int
 
 const (
@@ -90,6 +100,7 @@ const (
 	AreaStateInAlarm
 )
 
+// ArmType represents the type of arming.
 type ArmType int
 
 const (
@@ -99,6 +110,7 @@ const (
 	ArmTypePartArm3
 )
 
+// LogEventType represents the type of a log event.
 type LogEventType int
 
 const (
@@ -124,6 +136,7 @@ const (
 	// Add more log event types as needed
 )
 
+// LogEventGroupType represents the group type of a log event.
 type LogEventGroupType int
 
 const (

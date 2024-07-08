@@ -112,7 +112,7 @@ func (m *MQTT) handleMessage(client mqtt.Client, msg mqtt.Message) {
 				return
 			}
 		}
-		m.log.Warning("Received message on unknown topic: %s", topic)
+		m.log.Warn("Received message on unknown topic: %s", topic)
 	}
 }
 
@@ -129,7 +129,7 @@ func (m *MQTT) handleAreaCommand(area panel.Area, command string) {
 	case "disarm":
 		m.panel.Disarm(area)
 	default:
-		m.log.Warning("Unknown area command: %s", command)
+		m.log.Warn("Unknown area command: %s", command)
 	}
 }
 
@@ -145,54 +145,4 @@ func (m *MQTT) publishPanelStatus() {
 		"firmware_version": device.FirmwareVersion,
 	}
 	m.publish(m.topics.Config(), status, true)
-}
-
-func (m *MQTT) PublishAreaStatus(area panel.Area) {
-	status := map[string]interface{}{
-		"id":     area.ID,
-		"name":   area.Name,
-		"number": area.Number,
-		"status": area.Status.String(),
-	}
-	if area.Status == panel.AreaStatePartArmed {
-		status["part_arm"] = area.PartArm
-	}
-	m.publish(m.topics.Area(area), status, true)
-}
-
-func (m *MQTT) PublishZoneStatus(zone panel.Zone) {
-	status := map[string]interface{}{
-		"id":     zone.ID,
-		"name":   zone.Name,
-		"number": zone.Number,
-		"type":   zone.Type.String(),
-		"status": zone.Status.String(),
-	}
-	m.publish(m.topics.Zone(zone), status, true)
-}
-
-func (m *MQTT) PublishLogEvent(event panel.LogEvent) {
-	m.publish(m.topics.Log(), event, m.config.RetainLog)
-}
-
-func (m *MQTT) publish(topic string, message interface{}, retain bool) {
-	payload, err := json.Marshal(message)
-	if err != nil {
-		m.log.Error("Failed to marshal message for topic %s: %v", topic, err)
-		return
-	}
-
-	token := m.client.Publish(topic, byte(m.config.QOS), retain, payload)
-	if token.Wait() && token.Error() != nil {
-		m.log.Error("Failed to publish message to topic %s: %v", topic, token.Error())
-	} else {
-		m.log.Debug("Published message to topic: %s", topic)
-	}
-}
-
-func (m *MQTT) Close() {
-	if m.client != nil && m.client.IsConnected() {
-		m.publish(m.topics.Status(), offlinePayload, true)
-		m.client.Disconnect(250)
-	}
 }

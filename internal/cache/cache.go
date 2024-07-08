@@ -7,19 +7,19 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/daemonp/texecom2mqtt/internal/panel"
+	"github.com/daemonp/texecom2mqtt/internal/texecom"
 )
 
 const cacheFileName = "texecom2mqtt_cache.json"
 
 type CacheData struct {
-	Device     panel.Device `json:"device"`
-	Areas      []panel.Area `json:"areas"`
-	Zones      []panel.Zone `json:"zones"`
-	LastUpdate time.Time    `json:"last_update"`
+	Device     texecom.Device `json:"device"`
+	Areas      []texecom.Area `json:"areas"`
+	Zones      []texecom.Zone `json:"zones"`
+	LastUpdate time.Time      `json:"last_update"`
 }
 
-func SaveCache(p *panel.Panel) error {
+func SaveCache(p *texecom.Panel) error {
 	cacheData := CacheData{
 		Device:     p.GetDevice(),
 		Areas:      p.GetAreas(),
