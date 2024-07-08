@@ -67,8 +67,26 @@ const (
 	ZoneTypeTwentyFourHourGas
 	ZoneTypeAuxiliary
 	ZoneTypeTamper
-	// Add more zone types as needed
 )
+
+func (z ZoneType) String() string {
+	return [...]string{
+		"Not used",
+		"Entry/Exit 1",
+		"Entry/Exit 2",
+		"Guard",
+		"Guard Access",
+		"24Hr Audible",
+		"24Hr Silent",
+		"PA Audible",
+		"PA Silent",
+		"Fire",
+		"Medical",
+		"24Hr Gas",
+		"Auxiliary",
+		"Tamper",
+	}[z]
+}
 
 type ZoneState int
 
@@ -78,6 +96,15 @@ const (
 	ZoneStateTampered
 	ZoneStateShort
 )
+
+func (z ZoneState) String() string {
+	return [...]string{
+		"Secure",
+		"Active",
+		"Tampered",
+		"Short",
+	}[z]
+}
 
 type AreaState int
 
@@ -89,6 +116,17 @@ const (
 	AreaStatePartArmed
 	AreaStateInAlarm
 )
+
+func (a AreaState) String() string {
+	return [...]string{
+		"Disarmed",
+		"In Exit",
+		"In Entry",
+		"Armed",
+		"Part Armed",
+		"In Alarm",
+	}[a]
+}
 
 type ArmType int
 
@@ -121,7 +159,6 @@ const (
 	LogEventSecurity
 	LogEventOmitKey
 	LogEventCustom
-	// Add more log event types as needed
 )
 
 type LogEventGroupType int
@@ -134,13 +171,12 @@ const (
 	LogEventGroupTypeRestore
 	LogEventGroupTypeOpen
 	LogEventGroupTypeClose
-	// Add more log event group types as needed
 )
 
 type CacheData struct {
-	Device     Device   `json:"device"`
-	Areas      []Area   `json:"areas"`
-	Zones      []Zone   `json:"zones"`
+	Device     Device    `json:"device"`
+	Areas      []Area    `json:"areas"`
+	Zones      []Zone    `json:"zones"`
 	LastUpdate time.Time `json:"last_update"`
 }
 

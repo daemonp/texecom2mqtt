@@ -7,13 +7,12 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/daemonp/texecom2mqtt/internal/panel"
 	"github.com/daemonp/texecom2mqtt/internal/types"
 )
 
 const cacheFileName = "texecom2mqtt_cache.json"
 
-func SaveCache(p *panel.Panel) error {
+func SaveCache(p *types.Panel) error {
 	cacheData := types.CacheData{
 		Device:     p.GetDevice(),
 		Areas:      p.GetAreas(),

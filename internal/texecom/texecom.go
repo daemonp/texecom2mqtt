@@ -89,7 +89,6 @@ func (t *Texecom) GetPanelIdentification() (types.Device, error) {
 		return types.Device{}, fmt.Errorf("failed to get panel identification: %v", err)
 	}
 
-	// Parse the response to extract device information
 	device := types.Device{
 		Model:           string(resp[:20]),
 		SerialNumber:    string(resp[20:40]),
@@ -179,8 +178,8 @@ func (t *Texecom) GetAreaStates() ([]types.AreaStatus, error) {
 	return states, nil
 }
 
-func (t *Texecom) Arm(areaNumber int, armType types.ArmType) error {
-	cmd := []byte{0x06, byte(areaNumber), byte(armType)} // Arm Area command
+func (t *Texecom) Arm(area int, armType types.ArmType) error {
+	cmd := []byte{0x06, byte(area), byte(armType)} // Arm Area command
 	resp, err := t.sendCommand(cmd)
 	if err != nil {
 		return fmt.Errorf("failed to arm area: %v", err)
@@ -193,8 +192,8 @@ func (t *Texecom) Arm(areaNumber int, armType types.ArmType) error {
 	return nil
 }
 
-func (t *Texecom) Disarm(areaNumber int) error {
-	cmd := []byte{0x08, byte(areaNumber)} // Disarm Area command
+func (t *Texecom) Disarm(area int) error {
+	cmd := []byte{0x08, byte(area)} // Disarm Area command
 	resp, err := t.sendCommand(cmd)
 	if err != nil {
 		return fmt.Errorf("failed to disarm area: %v", err)
@@ -207,8 +206,8 @@ func (t *Texecom) Disarm(areaNumber int) error {
 	return nil
 }
 
-func (t *Texecom) Reset(areaNumber int) error {
-	cmd := []byte{0x09, byte(areaNumber)} // Reset Area command
+func (t *Texecom) Reset(area int) error {
+	cmd := []byte{0x09, byte(area)} // Reset Area command
 	resp, err := t.sendCommand(cmd)
 	if err != nil {
 		return fmt.Errorf("failed to reset area: %v", err)
@@ -464,93 +463,8 @@ func (t *Texecom) getLogEventDescription(eventType types.LogEventType) string {
 		return "Omit Key"
 	case types.LogEventCustom:
 		return "Custom Alarm"
-	// Add more cases for other log event types
 	default:
 		return fmt.Sprintf("Unknown Log Event Type: %d", eventType)
 	}
 }
 
-func (t *Texecom) getZoneTypeDescription(zoneType types.ZoneType) string {
-	switch zoneType {
-	case types.ZoneTypeNotUsed:
-		return "Not used"
-	case types.ZoneTypeEntryExit1:
-		return "Entry/Exit 1"
-	case types.ZoneTypeEntryExit2:
-		return "Entry/Exit 2"
-	case types.ZoneTypeGuard:
-		return "Guard"
-	case types.ZoneTypeGuardAccess:
-		return "Guard Access"
-	case types.ZoneTypeTwentyFourHourAudible:
-		return "24Hr Audible"
-	case types.ZoneTypeTwentyFourHourSilent:
-		return "24Hr Silent"
-	case types.ZoneTypePAAudible:
-		return "PA Audible"
-	case types.ZoneTypePASilent:
-		return "PA Silent"
-	case types.ZoneTypeFire:
-		return "Fire"
-	case types.ZoneTypeMedical:
-		return "Medical"
-	case types.ZoneTypeTwentyFourHourGas:
-		return "24Hr Gas"
-	case types.ZoneTypeAuxiliary:
-		return "Auxiliary"
-	case types.ZoneTypeTamper:
-		return "Tamper"
-	// Add more cases for other zone types
-	default:
-		return fmt.Sprintf("Unknown Zone Type: %d", zoneType)
-	}
-}
-
-func (t *Texecom) getZoneStateDescription(zoneState types.ZoneState) string {
-	switch zoneState {
-	case types.ZoneStateSecure:
-		return "Secure"
-	case types.ZoneStateActive:
-		return "Active"
-	case types.ZoneStateTampered:
-		return "Tampered"
-	case types.ZoneStateShort:
-		return "Short"
-	default:
-		return fmt.Sprintf("Unknown Zone State: %d", zoneState)
-	}
-}
-
-func (t *Texecom) getAreaStateDescription(areaState types.AreaState) string {
-	switch areaState {
-	case types.AreaStateDisarmed:
-		return "Disarmed"
-	case types.AreaStateInExit:
-		return "In Exit"
-	case types.AreaStateInEntry:
-		return "In Entry"
-	case types.AreaStateArmed:
-		return "Armed"
-	case types.AreaStatePartArmed:
-		return "Part Armed"
-	case types.AreaStateInAlarm:
-		return "In Alarm"
-	default:
-		return fmt.Sprintf("Unknown Area State: %d", areaState)
-	}
-}
-
-func (t *Texecom) logZoneEvent(event types.ZoneEvent) {
-	zoneState := t.getZoneStateDescription(event.ZoneState)
-	t.log.Info("Zone %d state changed to %s", event.ZoneNumber, zoneState)
-}
-
-func (t *Texecom) logAreaEvent(event types.AreaEvent) {
-	areaState := t.getAreaStateDescription(event.AreaState)
-	t.log.Info("Area %d state changed to %s", event.AreaNumber, areaState)
-}
-
-func (t *Texecom) logLogEvent(event types.LogEvent) {
-	t.log.Info("Log Event: %s (Type: %d, Group: %d, Parameter: %d, Areas: %d, Time: %s)",
-		event.Description, event.Type, event.GroupType, event.Parameter, event.Areas, event.Time)
-}

@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"sync"
 	"time"
+	"strings"
 
 	"github.com/daemonp/texecom2mqtt/internal/config"
 	"github.com/daemonp/texecom2mqtt/internal/log"
 	"github.com/daemonp/texecom2mqtt/internal/texecom"
 	"github.com/daemonp/texecom2mqtt/internal/types"
-	"github.com/daemonp/texecom2mqtt/internal/util"
 )
 
 type Panel struct {
@@ -90,11 +90,11 @@ func (p *Panel) loadInitialData() error {
 	}
 
 	for i, area := range p.areas {
-		p.areas[i].Name = util.Normalize(area.Name)
+		p.areas[i].Name = normalize(area.Name)
 	}
 
 	for i, zone := range p.zones {
-		p.zones[i].Name = util.Normalize(zone.Name)
+		p.zones[i].Name = normalize(zone.Name)
 	}
 
 	if err := p.updateZoneStates(); err != nil {
@@ -196,16 +196,16 @@ func (p *Panel) updateAreaStates() error {
 	return nil
 }
 
-func (p *Panel) Arm(area types.Area, armType types.ArmType) error {
-	return p.texecom.Arm(area.Number, armType)
+func (p *Panel) Arm(area int, armType types.ArmType) error {
+	return p.texecom.Arm(area, armType)
 }
 
-func (p *Panel) Disarm(area types.Area) error {
-	return p.texecom.Disarm(area.Number)
+func (p *Panel) Disarm(area int) error {
+	return p.texecom.Disarm(area)
 }
 
-func (p *Panel) Reset(area types.Area) error {
-	return p.texecom.Reset(area.Number)
+func (p *Panel) Reset(area int) error {
+	return p.texecom.Reset(area)
 }
 
 func (p *Panel) SetDateTime(t time.Time) error {
@@ -256,5 +256,10 @@ func (p *Panel) Disconnect() {
 	p.log.Info("Disconnecting from panel...")
 	p.texecom.Disconnect()
 	p.log.Info("Disconnected from panel")
+}
+
+func normalize(s string) string {
+	s = strings.ReplaceAll(s, "\x00", "")
+	return strings.TrimSpace(s)
 }
 
