@@ -8,6 +8,7 @@ import (
 	"github.com/daemonp/texecom2mqtt/internal/config"
 	"github.com/daemonp/texecom2mqtt/internal/log"
 	"github.com/daemonp/texecom2mqtt/internal/texecom"
+	"github.com/daemonp/texecom2mqtt/internal/types"
 	"github.com/daemonp/texecom2mqtt/internal/util"
 )
 
@@ -15,9 +16,9 @@ type Panel struct {
 	config     *config.Config
 	log        *log.Logger
 	texecom    *texecom.Texecom
-	areas      []texecom.Area
-	zones      []texecom.Zone
-	device     texecom.Device
+	areas      []types.Area
+	zones      []types.Zone
+	device     types.Device
 	mu         sync.Mutex
 	isLoggedIn bool
 }

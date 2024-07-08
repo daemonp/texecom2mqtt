@@ -8,6 +8,7 @@ import (
 	"github.com/daemonp/texecom2mqtt/internal/log"
 	"github.com/daemonp/texecom2mqtt/internal/mqtt"
 	"github.com/daemonp/texecom2mqtt/internal/panel"
+	"github.com/daemonp/texecom2mqtt/internal/types"
 	"github.com/daemonp/texecom2mqtt/internal/util"
 )
 
@@ -57,7 +58,7 @@ func (ha *HomeAssistant) publishPanelConfig() {
 	ha.publishConfig("binary_sensor", "panel", "connectivity", config)
 }
 
-func (ha *HomeAssistant) publishAreaConfig(area panel.Area) {
+func (ha *HomeAssistant) publishAreaConfig(area types.Area) {
 	config := map[string]interface{}{
 		"name":             area.Name,
 		"unique_id":        fmt.Sprintf("%s_area_%s", ha.mqtt.GetPrefix(), util.Slugify(area.Name)),
@@ -73,7 +74,7 @@ func (ha *HomeAssistant) publishAreaConfig(area panel.Area) {
 	ha.publishConfig("alarm_control_panel", area.ID, "", config)
 }
 
-func (ha *HomeAssistant) publishZoneConfig(zone panel.Zone) {
+func (ha *HomeAssistant) publishZoneConfig(zone types.Zone) {
 	config := map[string]interface{}{
 		"name":           zone.Name,
 		"unique_id":      fmt.Sprintf("%s_zone_%s", ha.mqtt.GetPrefix(), util.Slugify(zone.Name)),
