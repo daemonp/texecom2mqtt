@@ -14,12 +14,18 @@ import (
 
 type HomeAssistant struct {
 	config *config.HomeAssistantConfig
-	mqtt   *mqtt.MQTT
+	mqtt   mqtt.MQTTClient
 	panel  *panel.Panel
 	log    *log.Logger
 }
 
-func New(cfg *config.HomeAssistantConfig, mqttClient *mqtt.MQTT, p *panel.Panel, logger *log.Logger) *HomeAssistant {
+type MQTTClient interface {
+	GetPrefix() string
+	Topics() *mqtt.Topics
+	Publish(topic string, payload interface{}, retain bool)
+}
+
+func New(cfg *config.HomeAssistantConfig, mqttClient mqtt.MQTTClient, p *panel.Panel, logger *log.Logger) *HomeAssistant {
 	return &HomeAssistant{
 		config: cfg,
 		mqtt:   mqttClient,

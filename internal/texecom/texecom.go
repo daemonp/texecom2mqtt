@@ -79,6 +79,7 @@ func (t *Texecom) Login(password string) error {
 		return fmt.Errorf("login failed: invalid response")
 	}
 
+	t.isLoggedIn = true
 	return nil
 }
 
@@ -89,6 +90,7 @@ func (t *Texecom) GetPanelIdentification() (types.Device, error) {
 		return types.Device{}, fmt.Errorf("failed to get panel identification: %v", err)
 	}
 
+	// Parse the response to extract device information
 	device := types.Device{
 		Model:           string(resp[:20]),
 		SerialNumber:    string(resp[20:40]),
@@ -96,6 +98,7 @@ func (t *Texecom) GetPanelIdentification() (types.Device, error) {
 		Zones:           int(binary.LittleEndian.Uint16(resp[60:62])),
 	}
 
+	t.device = device
 	return device, nil
 }
 
@@ -117,6 +120,7 @@ func (t *Texecom) GetAllAreas() ([]types.Area, error) {
 		})
 	}
 
+	t.areas = areas
 	return areas, nil
 }
 
@@ -140,6 +144,7 @@ func (t *Texecom) GetAllZones() ([]types.Zone, error) {
 		})
 	}
 
+	t.zones = zones
 	return zones, nil
 }
 
@@ -178,8 +183,8 @@ func (t *Texecom) GetAreaStates() ([]types.AreaStatus, error) {
 	return states, nil
 }
 
-func (t *Texecom) Arm(area int, armType types.ArmType) error {
-	cmd := []byte{0x06, byte(area), byte(armType)} // Arm Area command
+func (t *Texecom) Arm(areaNumber int, armType types.ArmType) error {
+	cmd := []byte{0x06, byte(areaNumber), byte(armType)} // Arm Area command
 	resp, err := t.sendCommand(cmd)
 	if err != nil {
 		return fmt.Errorf("failed to arm area: %v", err)
@@ -192,8 +197,8 @@ func (t *Texecom) Arm(area int, armType types.ArmType) error {
 	return nil
 }
 
-func (t *Texecom) Disarm(area int) error {
-	cmd := []byte{0x08, byte(area)} // Disarm Area command
+func (t *Texecom) Disarm(areaNumber int) error {
+	cmd := []byte{0x08, byte(areaNumber)} // Disarm Area command
 	resp, err := t.sendCommand(cmd)
 	if err != nil {
 		return fmt.Errorf("failed to disarm area: %v", err)
@@ -206,8 +211,8 @@ func (t *Texecom) Disarm(area int) error {
 	return nil
 }
 
-func (t *Texecom) Reset(area int) error {
-	cmd := []byte{0x09, byte(area)} // Reset Area command
+func (t *Texecom) Reset(areaNumber int) error {
+	cmd := []byte{0x09, byte(areaNumber)} // Reset Area command
 	resp, err := t.sendCommand(cmd)
 	if err != nil {
 		return fmt.Errorf("failed to reset area: %v", err)
@@ -467,4 +472,3 @@ func (t *Texecom) getLogEventDescription(eventType types.LogEventType) string {
 		return fmt.Sprintf("Unknown Log Event Type: %d", eventType)
 	}
 }
-

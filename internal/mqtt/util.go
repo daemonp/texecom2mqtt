@@ -1,8 +1,8 @@
 package mqtt
 
 import (
-	"strings"
 	"fmt"
+	"strings"
 )
 
 func ParseURL(urlStr string) (string, int) {

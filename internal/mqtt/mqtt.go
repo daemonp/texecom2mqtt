@@ -8,32 +8,44 @@ import (
 
 	"github.com/daemonp/texecom2mqtt/internal/config"
 	"github.com/daemonp/texecom2mqtt/internal/log"
-	"github.com/daemonp/texecom2mqtt/internal/texecom"
+	"github.com/daemonp/texecom2mqtt/internal/panel"
 	"github.com/daemonp/texecom2mqtt/internal/types"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
-const (
-	offlinePayload = "offline"
-	onlinePayload  = "online"
-)
-
 type MQTT struct {
 	config *config.MQTTConfig
-	panel  *texecom.Texecom
+	panel  *panel.Panel
 	log    *log.Logger
 	client mqtt.Client
 	topics *Topics
 	mu     sync.Mutex
 }
 
-func NewMQTT(cfg *config.MQTTConfig, p *texecom.Texecom, logger *log.Logger) *MQTT {
+func NewMQTT(cfg *config.MQTTConfig, p *panel.Panel, logger *log.Logger) *MQTT {
 	return &MQTT{
 		config: cfg,
 		panel:  p,
 		log:    logger,
 		topics: NewTopics(cfg.Prefix),
 	}
+}
+
+const (
+	offlinePayload = "offline"
+	onlinePayload  = "online"
+)
+
+func (m *MQTT) GetPrefix() string {
+	return m.config.Prefix
+}
+
+func (m *MQTT) Topics() *Topics {
+	return m.topics
+}
+
+func (m *MQTT) Publish(topic string, payload interface{}, retain bool) {
+	m.publish(topic, payload, retain)
 }
 
 func (m *MQTT) Connect() error {
@@ -153,7 +165,7 @@ func (m *MQTT) PublishAreaStatus(area types.Area) {
 		"id":     area.ID,
 		"name":   area.Name,
 		"number": area.Number,
-		"status": area.Status.String(),
+		"status": types.AreaStateDescriptions[area.Status],
 	}
 	if area.Status == types.AreaStatePartArmed {
 		status["part_arm"] = area.PartArm
@@ -166,8 +178,8 @@ func (m *MQTT) PublishZoneStatus(zone types.Zone) {
 		"id":     zone.ID,
 		"name":   zone.Name,
 		"number": zone.Number,
-		"type":   zone.Type.String(),
-		"status": zone.Status.String(),
+		"status": types.ZoneStateDescriptions[zone.Status],
+		"type":   types.ZoneTypeDescriptions[zone.Type],
 	}
 	m.publish(m.topics.Zone(zone), status, true)
 }
@@ -197,4 +209,3 @@ func (m *MQTT) Close() {
 		m.client.Disconnect(250)
 	}
 }
-

@@ -12,11 +12,11 @@ import (
 
 const cacheFileName = "texecom2mqtt_cache.json"
 
-func SaveCache(p *types.Panel) error {
+func SaveCache(device types.Device, areas []types.Area, zones []types.Zone) error {
 	cacheData := types.CacheData{
-		Device:     p.GetDevice(),
-		Areas:      p.GetAreas(),
-		Zones:      p.GetZones(),
+		Device:     device,
+		Areas:      areas,
+		Zones:      zones,
 		LastUpdate: time.Now(),
 	}
 
@@ -91,4 +91,3 @@ func getCacheDir() (string, error) {
 
 	return filepath.Join(homeDir, ".cache", "texecom2mqtt"), nil
 }
-

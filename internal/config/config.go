@@ -64,7 +64,7 @@ type AreaConfig struct {
 	PartArm3           string `yaml:"part_arm_3"`
 }
 
-func LoadConfig() (*Config, error) {
+func LoadConfig(configFile string) (*Config, error) {
 	data, err := ioutil.ReadFile("config.yml")
 	if err != nil {
 		return nil, fmt.Errorf("error reading config file: %v", err)

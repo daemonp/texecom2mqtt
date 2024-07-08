@@ -3,10 +3,10 @@ package homeassistant
 import (
 	"strings"
 
-	"github.com/daemonp/texecom2mqtt/internal/panel"
+	"github.com/daemonp/texecom2mqtt/internal/types"
 )
 
-func getDeviceClass(zone panel.Zone) string {
+func getDeviceClass(zone types.Zone) string {
 	// Check if there's a custom device class set in the config
 	if zone.HomeAssistant != nil && zone.HomeAssistant.DeviceClass != "" {
 		return zone.HomeAssistant.DeviceClass

@@ -2,9 +2,9 @@ package panel
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 	"time"
-	"strings"
 
 	"github.com/daemonp/texecom2mqtt/internal/config"
 	"github.com/daemonp/texecom2mqtt/internal/log"
@@ -33,8 +33,10 @@ func NewPanel(cfg *config.Config, logger *log.Logger) *Panel {
 
 func (p *Panel) Connect() error {
 	p.log.Info("Connecting to panel...")
+	p.log.Debug("Attempting connection to %s:%d", p.config.Texecom.Host, p.config.Texecom.Port)
 	err := p.texecom.Connect(p.config.Texecom.Host, p.config.Texecom.Port)
 	if err != nil {
+		p.log.Error("Failed to connect to panel: %v", err)
 		return fmt.Errorf("failed to connect to panel: %v", err)
 	}
 	p.log.Info("Connected to panel")
@@ -43,12 +45,14 @@ func (p *Panel) Connect() error {
 
 func (p *Panel) Login() error {
 	p.log.Info("Logging in to panel...")
+	p.log.Debug("Sending login command with UDL password")
 	err := p.texecom.Login(p.config.Texecom.UDLPassword)
 	if err != nil {
+		p.log.Error("Failed to log in to panel: %v", err)
 		return fmt.Errorf("failed to log in to panel: %v", err)
 	}
 	p.isLoggedIn = true
-	p.log.Info("Logged in to panel")
+	p.log.Info("Successfully logged in to panel")
 	return nil
 }
 
@@ -59,35 +63,45 @@ func (p *Panel) Start() error {
 
 	p.log.Info("Starting panel operations...")
 
+	p.log.Debug("Loading initial data from panel")
 	if err := p.loadInitialData(); err != nil {
+		p.log.Error("Failed to load initial data: %v", err)
 		return fmt.Errorf("failed to load initial data: %v", err)
 	}
 
-	// Start event listening
+	p.log.Debug("Starting event listener")
 	go p.listenForEvents()
 
-	// Start keepalive
+	p.log.Debug("Starting keepalive routine")
 	go p.keepalive()
 
+	p.log.Info("Panel operations started successfully")
 	return nil
 }
 
 func (p *Panel) loadInitialData() error {
 	var err error
+
+	p.log.Debug("Fetching panel identification")
 	p.device, err = p.texecom.GetPanelIdentification()
 	if err != nil {
 		return fmt.Errorf("failed to get panel identification: %v", err)
 	}
+	p.log.Debug("Panel identification: %+v", p.device)
 
+	p.log.Debug("Fetching areas")
 	p.areas, err = p.texecom.GetAllAreas()
 	if err != nil {
 		return fmt.Errorf("failed to get areas: %v", err)
 	}
+	p.log.Debug("Fetched %d areas", len(p.areas))
 
+	p.log.Debug("Fetching zones")
 	p.zones, err = p.texecom.GetAllZones()
 	if err != nil {
 		return fmt.Errorf("failed to get zones: %v", err)
 	}
+	p.log.Debug("Fetched %d zones", len(p.zones))
 
 	for i, area := range p.areas {
 		p.areas[i].Name = normalize(area.Name)
@@ -97,15 +111,17 @@ func (p *Panel) loadInitialData() error {
 		p.zones[i].Name = normalize(zone.Name)
 	}
 
+	p.log.Debug("Updating zone states")
 	if err := p.updateZoneStates(); err != nil {
 		return fmt.Errorf("failed to update zone states: %v", err)
 	}
 
+	p.log.Debug("Updating area states")
 	if err := p.updateAreaStates(); err != nil {
 		return fmt.Errorf("failed to update area states: %v", err)
 	}
 
-	p.log.Info("Initial data loaded")
+	p.log.Info("Initial data loaded successfully")
 	return nil
 }
 
@@ -243,12 +259,11 @@ func (p *Panel) SetCachedData(data *types.CacheData) {
 }
 
 func (p *Panel) GetCacheableData() *types.CacheData {
-	p.mu.Lock()
-	defer p.mu.Unlock()
 	return &types.CacheData{
-		Device: p.device,
-		Areas:  p.areas,
-		Zones:  p.zones,
+		Device:     p.device,
+		Areas:      p.areas,
+		Zones:      p.zones,
+		LastUpdate: time.Now(),
 	}
 }
 
@@ -262,4 +277,3 @@ func normalize(s string) string {
 	s = strings.ReplaceAll(s, "\x00", "")
 	return strings.TrimSpace(s)
 }
-

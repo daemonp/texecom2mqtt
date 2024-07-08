@@ -46,4 +46,3 @@ func (t *Topics) Text() string {
 func (t *Topics) DateTime() string {
 	return fmt.Sprintf("%s/datetime", t.prefix)
 }
-

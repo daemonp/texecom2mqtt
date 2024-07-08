@@ -1,6 +1,9 @@
 package types
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 type Device struct {
 	Model           string
@@ -18,11 +21,16 @@ type Area struct {
 }
 
 type Zone struct {
-	Number int
-	Name   string
-	Type   ZoneType
-	ID     string
-	Status ZoneState
+	Number        int
+	Name          string
+	Type          ZoneType
+	ID            string
+	Status        ZoneState
+	HomeAssistant *HomeAssistantZone
+}
+
+type HomeAssistantZone struct {
+	DeviceClass string `yaml:"device_class"`
 }
 
 type AreaStatus struct {
@@ -69,25 +77,6 @@ const (
 	ZoneTypeTamper
 )
 
-func (z ZoneType) String() string {
-	return [...]string{
-		"Not used",
-		"Entry/Exit 1",
-		"Entry/Exit 2",
-		"Guard",
-		"Guard Access",
-		"24Hr Audible",
-		"24Hr Silent",
-		"PA Audible",
-		"PA Silent",
-		"Fire",
-		"Medical",
-		"24Hr Gas",
-		"Auxiliary",
-		"Tamper",
-	}[z]
-}
-
 type ZoneState int
 
 const (
@@ -96,15 +85,6 @@ const (
 	ZoneStateTampered
 	ZoneStateShort
 )
-
-func (z ZoneState) String() string {
-	return [...]string{
-		"Secure",
-		"Active",
-		"Tampered",
-		"Short",
-	}[z]
-}
 
 type AreaState int
 
@@ -116,17 +96,6 @@ const (
 	AreaStatePartArmed
 	AreaStateInAlarm
 )
-
-func (a AreaState) String() string {
-	return [...]string{
-		"Disarmed",
-		"In Exit",
-		"In Entry",
-		"Armed",
-		"Part Armed",
-		"In Alarm",
-	}[a]
-}
 
 type ArmType int
 
@@ -180,3 +149,62 @@ type CacheData struct {
 	LastUpdate time.Time `json:"last_update"`
 }
 
+func (t ZoneType) String() string {
+	return ZoneTypeDescriptions[t]
+}
+
+func (s AreaState) String() string {
+	return AreaStateDescriptions[s]
+}
+
+func (s ZoneState) String() string {
+	return ZoneStateDescriptions[s]
+}
+
+var ArmTypeDescriptions = map[ArmType]string{
+	ArmTypeFull:     "Full Arm",
+	ArmTypePartArm1: "Part Arm 1",
+	ArmTypePartArm2: "Part Arm 2",
+	ArmTypePartArm3: "Part Arm 3",
+}
+
+var AreaStateDescriptions = map[AreaState]string{
+	AreaStateDisarmed:  "Disarmed",
+	AreaStateInExit:    "In Exit",
+	AreaStateInEntry:   "In Entry",
+	AreaStateArmed:     "Armed",
+	AreaStatePartArmed: "Part Armed",
+	AreaStateInAlarm:   "In Alarm",
+}
+
+var ZoneStateDescriptions = map[ZoneState]string{
+	ZoneStateSecure:   "Secure",
+	ZoneStateActive:   "Active",
+	ZoneStateTampered: "Tampered",
+	ZoneStateShort:    "Short",
+}
+
+var ZoneTypeDescriptions = map[ZoneType]string{
+	ZoneTypeNotUsed:               "Not used",
+	ZoneTypeEntryExit1:            "Entry/Exit 1",
+	ZoneTypeEntryExit2:            "Entry/Exit 2",
+	ZoneTypeGuard:                 "Guard",
+	ZoneTypeGuardAccess:           "Guard Access",
+	ZoneTypeTwentyFourHourAudible: "24Hr Audible",
+	ZoneTypeTwentyFourHourSilent:  "24Hr Silent",
+	ZoneTypePAAudible:             "PA Audible",
+	ZoneTypePASilent:              "PA Silent",
+	ZoneTypeFire:                  "Fire",
+	ZoneTypeMedical:               "Medical",
+	ZoneTypeTwentyFourHourGas:     "24Hr Gas",
+	ZoneTypeAuxiliary:             "Auxiliary",
+	ZoneTypeTamper:                "Tamper",
+}
+
+func GetAreaStatus(area Area) string {
+	status := AreaStateDescriptions[area.Status]
+	if area.Status == AreaStatePartArmed {
+		return fmt.Sprintf("%s %d", status, area.PartArm)
+	}
+	return status
+}
