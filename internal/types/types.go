@@ -50,22 +50,6 @@ type LogEvent struct {
 	Description string
 }
 
-type CacheData struct {
-	Device     Device    `json:"device"`
-	Areas      []Area    `json:"areas"`
-	Zones      []Zone    `json:"zones"`
-	LastUpdate time.Time `json:"last_update"`
-}
-
-type ArmType int
-
-const (
-	ArmTypeFull ArmType = iota
-	ArmTypePartArm1
-	ArmTypePartArm2
-	ArmTypePartArm3
-)
-
 type ZoneType int
 
 const (
@@ -83,6 +67,7 @@ const (
 	ZoneTypeTwentyFourHourGas
 	ZoneTypeAuxiliary
 	ZoneTypeTamper
+	// Add more zone types as needed
 )
 
 type ZoneState int
@@ -103,6 +88,15 @@ const (
 	AreaStateArmed
 	AreaStatePartArmed
 	AreaStateInAlarm
+)
+
+type ArmType int
+
+const (
+	ArmTypeFull ArmType = iota
+	ArmTypePartArm1
+	ArmTypePartArm2
+	ArmTypePartArm3
 )
 
 type LogEventType int
@@ -127,6 +121,7 @@ const (
 	LogEventSecurity
 	LogEventOmitKey
 	LogEventCustom
+	// Add more log event types as needed
 )
 
 type LogEventGroupType int
@@ -139,4 +134,13 @@ const (
 	LogEventGroupTypeRestore
 	LogEventGroupTypeOpen
 	LogEventGroupTypeClose
+	// Add more log event group types as needed
 )
+
+type CacheData struct {
+	Device     Device   `json:"device"`
+	Areas      []Area   `json:"areas"`
+	Zones      []Zone   `json:"zones"`
+	LastUpdate time.Time `json:"last_update"`
+}
+

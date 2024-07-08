@@ -8,7 +8,7 @@ import (
 
 	"github.com/daemonp/texecom2mqtt/internal/config"
 	"github.com/daemonp/texecom2mqtt/internal/log"
-	"github.com/daemonp/texecom2mqtt/internal/panel"
+	"github.com/daemonp/texecom2mqtt/internal/texecom"
 	"github.com/daemonp/texecom2mqtt/internal/types"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
@@ -20,14 +20,14 @@ const (
 
 type MQTT struct {
 	config *config.MQTTConfig
-	panel  *panel.Panel
+	panel  *texecom.Texecom
 	log    *log.Logger
 	client mqtt.Client
 	topics *Topics
 	mu     sync.Mutex
 }
 
-func NewMQTT(cfg *config.MQTTConfig, p *panel.Panel, logger *log.Logger) *MQTT {
+func NewMQTT(cfg *config.MQTTConfig, p *texecom.Texecom, logger *log.Logger) *MQTT {
 	return &MQTT{
 		config: cfg,
 		panel:  p,
@@ -117,18 +117,18 @@ func (m *MQTT) handleMessage(client mqtt.Client, msg mqtt.Message) {
 	}
 }
 
-func (m *MQTT) handleAreaCommand(area panel.Area, command string) {
+func (m *MQTT) handleAreaCommand(area types.Area, command string) {
 	switch command {
 	case "full_arm":
-		m.panel.Arm(area, panel.ArmTypeFull)
+		m.panel.Arm(area.Number, types.ArmTypeFull)
 	case "part_arm_1":
-		m.panel.Arm(area, panel.ArmTypePartArm1)
+		m.panel.Arm(area.Number, types.ArmTypePartArm1)
 	case "part_arm_2":
-		m.panel.Arm(area, panel.ArmTypePartArm2)
+		m.panel.Arm(area.Number, types.ArmTypePartArm2)
 	case "part_arm_3":
-		m.panel.Arm(area, panel.ArmTypePartArm3)
+		m.panel.Arm(area.Number, types.ArmTypePartArm3)
 	case "disarm":
-		m.panel.Disarm(area)
+		m.panel.Disarm(area.Number)
 	default:
 		m.log.Warn("Unknown area command: %s", command)
 	}
@@ -148,20 +148,20 @@ func (m *MQTT) publishPanelStatus() {
 	m.publish(m.topics.Config(), status, true)
 }
 
-func (m *MQTT) PublishAreaStatus(area panel.Area) {
+func (m *MQTT) PublishAreaStatus(area types.Area) {
 	status := map[string]interface{}{
 		"id":     area.ID,
 		"name":   area.Name,
 		"number": area.Number,
 		"status": area.Status.String(),
 	}
-	if area.Status == panel.AreaStatePartArmed {
+	if area.Status == types.AreaStatePartArmed {
 		status["part_arm"] = area.PartArm
 	}
 	m.publish(m.topics.Area(area), status, true)
 }
 
-func (m *MQTT) PublishZoneStatus(zone panel.Zone) {
+func (m *MQTT) PublishZoneStatus(zone types.Zone) {
 	status := map[string]interface{}{
 		"id":     zone.ID,
 		"name":   zone.Name,
@@ -172,7 +172,7 @@ func (m *MQTT) PublishZoneStatus(zone panel.Zone) {
 	m.publish(m.topics.Zone(zone), status, true)
 }
 
-func (m *MQTT) PublishLogEvent(event panel.LogEvent) {
+func (m *MQTT) PublishLogEvent(event types.LogEvent) {
 	m.publish(m.topics.Log(), event, m.config.RetainLog)
 }
 
@@ -197,3 +197,4 @@ func (m *MQTT) Close() {
 		m.client.Disconnect(250)
 	}
 }
+

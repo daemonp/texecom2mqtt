@@ -257,3 +257,4 @@ func (p *Panel) Disconnect() {
 	p.texecom.Disconnect()
 	p.log.Info("Disconnected from panel")
 }
+
