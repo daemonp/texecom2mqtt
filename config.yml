@@ -1,0 +1,39 @@
+texecom:
+  host: "192.168.1.100"
+  udl_password: "1234"
+  port: 10001
+
+mqtt:
+  host: "localhost"
+  port: 1883
+  username: ""
+  password: ""
+  client_id: "texecom2mqtt"
+  prefix: "texecom2mqtt"
+  qos: 0
+  retain: true
+  retain_log: false
+
+homeassistant:
+  discovery: true
+  prefix: "homeassistant"
+
+log: "info"
+cache: true
+
+areas:
+  - id: "A"
+    name: "House"
+    code: "1234"
+    code_arm_required: false
+    code_disarm_required: true
+    full_arm: "armed_away"
+    part_arm_1: "armed_home"
+
+zones:
+  - id: "1"
+    name: "Front Door"
+    device_class: "door"
+  - id: "2"
+    name: "Living Room PIR"
+    device_class: "motion"
