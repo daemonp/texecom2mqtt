@@ -6,13 +6,15 @@ import (
 	"net"
 	"sync"
 	"time"
+    "context"
 
 	"github.com/daemonp/texecom2mqtt/internal/log"
 	"github.com/daemonp/texecom2mqtt/internal/types"
 )
 
 type Texecom struct {
-	log            *log.Logger
+	// conn net.Conn
+    log            *log.Logger
 	conn           net.Conn
 	device         types.Device
 	areas          []types.Area
@@ -34,33 +36,45 @@ func NewTexecom(logger *log.Logger) *Texecom {
 }
 
 const (
-    CMD_TIMEOUT = 3500 * time.Millisecond
+    CMD_TIMEOUT = 50000 * time.Millisecond
     CMD_RETRIES = 5
 )
 
-
 func (t *Texecom) Connect(host string, port int) error {
-	t.mu.Lock()
-	defer t.mu.Unlock()
+    ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+    defer cancel()
 
-	if t.isConnected {
-		return fmt.Errorf("already connected")
-	}
+    t.log.Debug("Attempting to connect to %s:%d", host, port)
+    var d net.Dialer
+    conn, err := d.DialContext(ctx, "tcp", fmt.Sprintf("%s:%d", host, port))
+    if err != nil {
+        t.log.Error("Connection failed: %v", err)
+        return fmt.Errorf("failed to connect: %v", err)
+    }
 
-	t.log.Debug("Attempting to connect to %s:%d", host, port)
-	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", host, port), 10*time.Second)
-	if err != nil {
-		t.log.Error("Connection failed: %v", err)
-		return fmt.Errorf("failed to connect: %v", err)
-	}
+    t.conn = conn
+    t.isConnected = true  // Set this flag
+    t.log.Debug("Connection established")
 
-	t.conn = conn
-	t.isConnected = true
-	t.log.Debug("Connection established")
-	go t.readLoop()
+    // Get the serial number
+    serialNumber, err := t.getSerialNumber(ctx)
+    if err != nil {
+        t.log.Error("Failed to get serial number: %v", err)
+        t.Disconnect()
+        return fmt.Errorf("failed to get serial number: %v", err)
+    }
+    t.log.Info("Retrieved serial number: %s", serialNumber)
 
-	return nil
+    // Check connection status after getting serial number
+    if !t.isConnected {
+        return fmt.Errorf("connection lost after retrieving serial number")
+    }
+
+    go t.readLoop()
+
+    return nil
 }
+
 
 func (t *Texecom) Disconnect() {
 	t.mu.Lock()
@@ -69,6 +83,10 @@ func (t *Texecom) Disconnect() {
 	if !t.isConnected {
 		return
 	}
+
+    if t.conn != nil {
+        t.conn.Close()
+    }
 
 	t.log.Debug("Disconnecting from panel")
 	close(t.disconnectChan)
@@ -79,44 +97,130 @@ func (t *Texecom) Disconnect() {
 }
 
 func (t *Texecom) Login(password string) error {
+    if !t.isConnected {
+        return fmt.Errorf("not connected to panel")
+    }
+
     t.log.Debug("Preparing login command")
     cmd := []byte{0x01} // Login command
     cmd = append(cmd, []byte(password)...)
-    
-    // Add a 2-second delay before sending the first command
-    time.Sleep(2 * time.Second)
 
-    for attempt := 1; attempt <= CMD_RETRIES; attempt++ {
-        t.log.Debug("Sending login command (attempt %d of %d)", attempt, CMD_RETRIES)
-        packet := t.createCommandPacket(cmd[0], cmd[1:])
-        t.log.Debug("Login packet: %v", packet)
-        
-        resp, err := t.sendCommand(packet)
-        if err != nil {
-            t.log.Error("Login command failed: %v", err)
-            if attempt == CMD_RETRIES {
-                return fmt.Errorf("login failed after %d attempts: %v", CMD_RETRIES, err)
-            }
-            time.Sleep(CMD_TIMEOUT)
-            continue
-        }
+    packet := t.createCommandPacket(cmd[0], cmd[1:])
+    t.log.Debug("Login packet: %x", packet)
 
-        t.log.Debug("Received login response: %v", resp)
-        if len(resp) > 0 && resp[0] == 0x06 { // ACK
-            t.isLoggedIn = true
-            t.log.Info("Login successful")
-            return nil
-        }
-
-        t.log.Error("Login failed: invalid response")
-        if attempt == CMD_RETRIES {
-            return fmt.Errorf("login failed after %d attempts: invalid response", CMD_RETRIES)
-        }
-        time.Sleep(CMD_TIMEOUT)
+    response, err := t.sendCommand(packet)
+    if err != nil {
+        t.log.Error("Failed to send login command: %v", err)
+        return fmt.Errorf("failed to send login command: %v", err)
     }
 
-    return fmt.Errorf("login failed after %d attempts", CMD_RETRIES)
+    t.log.Debug("Received login response: %x", response)
+    if len(response) > 0 && response[5] == 0x06 { // ACK
+        t.isLoggedIn = true
+        t.log.Info("Login successful")
+        return nil
+    }
+    return fmt.Errorf("login failed: invalid response")
 }
+
+func (t *Texecom) sendCommand(packet []byte) ([]byte, error) {
+    t.mu.Lock()
+    defer t.mu.Unlock()
+
+    if !t.isConnected {
+        return nil, fmt.Errorf("not connected")
+    }
+
+    t.log.Debug("Sending command: %x", packet)
+    _, err := t.conn.Write(packet)
+    if err != nil {
+        t.log.Error("Failed to send command: %v", err)
+        t.isConnected = false
+        return nil, fmt.Errorf("failed to send command: %v", err)
+    }
+
+    t.log.Debug("Waiting for response")
+    deadline := time.Now().Add(10 * time.Second)
+    for time.Now().Before(deadline) {
+        t.conn.SetReadDeadline(time.Now().Add(1 * time.Second))
+        resp := make([]byte, 1024)
+        n, err := t.conn.Read(resp)
+        if err != nil {
+            if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+                continue // This is just a timeout for this read attempt, not for the whole operation
+            }
+            t.log.Error("Failed to read response: %v", err)
+            t.isConnected = false
+            return nil, fmt.Errorf("failed to read response: %v", err)
+        }
+
+        t.log.Debug("Received response: %x", resp[:n])
+        // Check if this is the response we're looking for
+        if n >= 3 && resp[0] == 't' && resp[1] == 'R' {
+            return resp[:n], nil
+        }
+        // If it's not the response we're looking for, process it and continue waiting
+        t.processMessage(resp[:n])
+    }
+
+    return nil, fmt.Errorf("command timed out")
+}
+
+func (t *Texecom) sendCommandAndWaitForResponse(packet []byte, timeout time.Duration) ([]byte, error) {
+    err := t.sendRawCommand(packet)
+    if err != nil {
+        return nil, fmt.Errorf("failed to send command: %v", err)
+    }
+
+    deadline := time.Now().Add(timeout)
+    buffer := make([]byte, 1024)
+
+    for time.Now().Before(deadline) {
+        t.conn.SetReadDeadline(time.Now().Add(1 * time.Second))
+        n, err := t.conn.Read(buffer)
+        if err != nil {
+            if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+                continue // This is just a timeout for this read attempt, not for the whole operation
+            }
+            return nil, fmt.Errorf("failed to read response: %v", err)
+        }
+
+        t.log.Debug("Received data: %v", buffer[:n])
+        return buffer[:n], nil
+    }
+
+    return nil, fmt.Errorf("response not received within timeout")
+}
+
+func (t *Texecom) sendCommandWithTimeout(packet []byte, timeout time.Duration) ([]byte, error) {
+    t.mu.Lock()
+    defer t.mu.Unlock()
+
+    if !t.isConnected {
+        return nil, fmt.Errorf("not connected")
+    }
+
+    t.log.Debug("Sending command: %v", packet)
+    _, err := t.conn.Write(packet)
+    if err != nil {
+        return nil, fmt.Errorf("failed to send command: %v", err)
+    }
+
+    t.conn.SetReadDeadline(time.Now().Add(timeout))
+    defer t.conn.SetReadDeadline(time.Time{}) // Reset the deadline
+
+    resp := make([]byte, 1024)
+    n, err := t.conn.Read(resp)
+    if err != nil {
+        if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+            return nil, fmt.Errorf("timeout while reading response")
+        }
+        return nil, fmt.Errorf("failed to read response: %v", err)
+    }
+
+    return resp[:n], nil
+}
+
 
 func (t *Texecom) GetPanelIdentification() (types.Device, error) {
 	t.log.Debug("Sending Get Panel Identification command")
@@ -351,37 +455,7 @@ func (t *Texecom) Events() <-chan interface{} {
 	return t.eventChan
 }
 
-func (t *Texecom) sendCommand(packet []byte) ([]byte, error) {
-    t.mu.Lock()
-    defer t.mu.Unlock()
 
-    if !t.isConnected {
-        return nil, fmt.Errorf("not connected")
-    }
-
-    t.log.Debug("Sending command: %v", packet)
-    _, err := t.conn.Write(packet)
-    if err != nil {
-        t.log.Error("Failed to send command: %v", err)
-        return nil, fmt.Errorf("failed to send command: %v", err)
-    }
-
-    t.log.Debug("Waiting for response")
-    t.conn.SetReadDeadline(time.Now().Add(10 * time.Second)) // Increased timeout to 10 seconds
-    resp := make([]byte, 1024)
-    n, err := t.conn.Read(resp)
-    t.conn.SetReadDeadline(time.Time{}) // Reset the deadline
-    if err != nil {
-        if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
-            return nil, fmt.Errorf("command timed out")
-        }
-        t.log.Error("Failed to read response: %v", err)
-        return nil, fmt.Errorf("failed to read response: %v", err)
-    }
-
-    t.log.Debug("Received response: %v", resp[:n])
-    return resp[:n], nil
-}
 
 func (t *Texecom) readLoop() {
 	buffer := make([]byte, 1024)
@@ -409,7 +483,8 @@ func (t *Texecom) readLoop() {
 }
 
 func (t *Texecom) processMessage(msg []byte) {
-	if len(msg) < 5 {
+   t.log.Debug("Processing message: %v", msg)
+ 	if len(msg) < 5 {
 		return
 	}
 
@@ -536,6 +611,7 @@ func (t *Texecom) getLogEventDescription(eventType types.LogEventType) string {
 	return description
 }
 
+
 func (t *Texecom) createCommandPacket(command byte, body []byte) []byte {
     length := byte(6 + len(body))
     packet := make([]byte, length)
@@ -547,8 +623,74 @@ func (t *Texecom) createCommandPacket(command byte, body []byte) []byte {
     if len(body) > 0 {
         copy(packet[5:], body)
     }
-    crc := CRC8(packet[:length-1])
+    crc := t.calculateCRC(packet[:length-1])
     packet[length-1] = crc
     t.sequence++
     return packet
+}
+
+
+func (t *Texecom) decodeSerialNumber(data []byte) string {
+    if len(data) < 11 {
+        return "Unknown"
+    }
+    // The serial number is in the last 7 bytes of the response
+    serialBytes := data[4:11]
+    return fmt.Sprintf("%02x%02x%02x%02x%02x%02x%02x",
+        serialBytes[0], serialBytes[1], serialBytes[2], serialBytes[3],
+        serialBytes[4], serialBytes[5], serialBytes[6])
+}
+
+func (t *Texecom) getSerialNumber(ctx context.Context) (string, error) {
+    t.log.Debug("Preparing to execute serial number command")
+    payload := []byte{0x03, 0x5a, 0xa2}
+
+    time.Sleep(1 * time.Second)
+
+    t.log.Debug("Sending serial number command (raw)")
+    err := t.sendRawCommand(payload)
+    if err != nil {
+        return "", fmt.Errorf("failed to send serial number command: %v", err)
+    }
+
+    t.log.Debug("Waiting for serial number response")
+
+    responseChan := make(chan []byte)
+    errorChan := make(chan error)
+
+    go func() {
+        buffer := make([]byte, 1024)
+        n, err := t.conn.Read(buffer)
+        if err != nil {
+            errorChan <- err
+            return
+        }
+        responseChan <- buffer[:n]
+    }()
+
+    select {
+    case response := <-responseChan:
+        t.log.Debug("Received data: %x", response)
+        if len(response) >= 4 && response[0] == 0x0b && response[1] == 0x5a {
+            serialNumber := t.decodeSerialNumber(response)
+            t.log.Debug("Parsed serial number: %s", serialNumber)
+            return serialNumber, nil
+        }
+        return "", fmt.Errorf("unexpected response: %x", response)
+    case err := <-errorChan:
+        return "", fmt.Errorf("error reading response: %v", err)
+    case <-ctx.Done():
+        return "", fmt.Errorf("operation timed out")
+    }
+}
+
+func (t *Texecom) sendRawCommand(payload []byte) error {
+    t.log.Debug("Sending raw command: %x", payload)
+    n, err := t.conn.Write(payload)
+    if err != nil {
+        t.log.Error("Failed to send raw command: %v", err)
+        return fmt.Errorf("failed to send raw command: %v", err)
+    }
+    t.log.Debug("Sent %d bytes", n)
+    return nil
 }
