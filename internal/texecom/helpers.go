@@ -93,4 +93,3 @@ func CreateSetLCDDisplayInput(text string) []byte {
 	copy(input, text)
 	return input
 }
-

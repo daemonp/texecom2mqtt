@@ -8,13 +8,13 @@ import (
 )
 
 type Config struct {
-	Texecom      TexecomConfig      `yaml:"texecom"`
-	MQTT         MQTTConfig         `yaml:"mqtt"`
+	Texecom       TexecomConfig       `yaml:"texecom"`
+	MQTT          MQTTConfig          `yaml:"mqtt"`
 	HomeAssistant HomeAssistantConfig `yaml:"homeassistant"`
-	Zones        []ZoneConfig       `yaml:"zones"`
-	Areas        []AreaConfig       `yaml:"areas"`
-	Log          string             `yaml:"log"`
-	Cache        bool               `yaml:"cache"`
+	Zones         []ZoneConfig        `yaml:"zones"`
+	Areas         []AreaConfig        `yaml:"areas"`
+	Log           string              `yaml:"log"`
+	Cache         bool                `yaml:"cache"`
 }
 
 type TexecomConfig struct {

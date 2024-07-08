@@ -1,49 +1,48 @@
 package mqtt
 
 import (
-    "fmt"
+	"fmt"
 
-    "github.com/daemonp/texecom2mqtt/internal/panel"
-    "github.com/daemonp/texecom2mqtt/internal/util"
+	"github.com/daemonp/texecom2mqtt/internal/panel"
+	"github.com/daemonp/texecom2mqtt/internal/util"
 )
 
 type Topics struct {
-    prefix string
+	prefix string
 }
 
 func NewTopics(prefix string) *Topics {
-    return &Topics{prefix: prefix}
+	return &Topics{prefix: prefix}
 }
 
 func (t *Topics) Status() string {
-    return fmt.Sprintf("%s/status", t.prefix)
+	return fmt.Sprintf("%s/status", t.prefix)
 }
 
 func (t *Topics) Config() string {
-    return fmt.Sprintf("%s/config", t.prefix)
+	return fmt.Sprintf("%s/config", t.prefix)
 }
 
 func (t *Topics) Area(area panel.Area) string {
-    return fmt.Sprintf("%s/area/%s", t.prefix, util.Slugify(area.Name))
+	return fmt.Sprintf("%s/area/%s", t.prefix, util.Slugify(area.Name))
 }
 
 func (t *Topics) AreaCommand(area panel.Area) string {
-    return fmt.Sprintf("%s/area/%s/command", t.prefix, util.Slugify(area.Name))
+	return fmt.Sprintf("%s/area/%s/command", t.prefix, util.Slugify(area.Name))
 }
 
 func (t *Topics) Zone(zone panel.Zone) string {
-    return fmt.Sprintf("%s/zone/%s", t.prefix, util.Slugify(zone.Name))
+	return fmt.Sprintf("%s/zone/%s", t.prefix, util.Slugify(zone.Name))
 }
 
 func (t *Topics) Log() string {
-    return fmt.Sprintf("%s/log", t.prefix)
+	return fmt.Sprintf("%s/log", t.prefix)
 }
 
 func (t *Topics) Text() string {
-    return fmt.Sprintf("%s/text", t.prefix)
+	return fmt.Sprintf("%s/text", t.prefix)
 }
 
 func (t *Topics) DateTime() string {
-    return fmt.Sprintf("%s/datetime", t.prefix)
+	return fmt.Sprintf("%s/datetime", t.prefix)
 }
-

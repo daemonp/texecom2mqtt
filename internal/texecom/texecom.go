@@ -11,19 +11,19 @@ import (
 )
 
 type Texecom struct {
-	log           *log.Logger
-	conn          net.Conn
-	mu            sync.Mutex
-	sequence      uint8
-	eventChan     chan interface{}
-	isConnected   bool
+	log            *log.Logger
+	conn           net.Conn
+	mu             sync.Mutex
+	sequence       uint8
+	eventChan      chan interface{}
+	isConnected    bool
 	disconnectChan chan struct{}
 }
 
 func NewTexecom(logger *log.Logger) *Texecom {
 	return &Texecom{
-		log:           logger,
-		eventChan:     make(chan interface{}, 100),
+		log:            logger,
+		eventChan:      make(chan interface{}, 100),
 		disconnectChan: make(chan struct{}),
 	}
 }
@@ -420,132 +420,132 @@ func (t *Texecom) calculateCRC(data []byte) byte {
 }
 
 func (t *Texecom) getLogEventDescription(eventType LogEventType) string {
-    switch eventType {
-    case LogEventTypeEntryExit1:
-        return "Entry/Exit 1"
-    case LogEventTypeEntryExit2:
-        return "Entry/Exit 2"
-    case LogEventTypeGuard:
-        return "Guard"
-    case LogEventTypeGuardAccess:
-        return "Guard Access"
-    case LogEventTwentyFourHourAudible:
-        return "24hr Audible"
-    case LogEventTwentyFourHourSilent:
-        return "24hr Silent"
-    case LogEventPAAudible:
-        return "PA Audible"
-    case LogEventPASilent:
-        return "PA Silent"
-    case LogEventFire:
-        return "Fire Alarm"
-    case LogEventMedical:
-        return "Medical"
-    case LogEventTwentyFourHourGas:
-        return "24Hr Gas Alarm"
-    case LogEventAuxiliary:
-        return "Auxiliary Alarm"
-    case LogEventTamper:
-        return "24hr Tamper Alarm"
-    case LogEventExitTerminator:
-        return "Exit Terminator"
-    case LogEventMomentKey:
-        return "Keyswitch - Momentary"
-    case LogEventLatchKey:
-        return "Keyswitch - Latching"
-    case LogEventSecurity:
-        return "Security Key"
-    case LogEventOmitKey:
-        return "Omit Key"
-    case LogEventCustom:
-        return "Custom Alarm"
-    // Add more cases for other log event types
-    default:
-        return fmt.Sprintf("Unknown Log Event Type: %d", eventType)
-    }
+	switch eventType {
+	case LogEventTypeEntryExit1:
+		return "Entry/Exit 1"
+	case LogEventTypeEntryExit2:
+		return "Entry/Exit 2"
+	case LogEventTypeGuard:
+		return "Guard"
+	case LogEventTypeGuardAccess:
+		return "Guard Access"
+	case LogEventTwentyFourHourAudible:
+		return "24hr Audible"
+	case LogEventTwentyFourHourSilent:
+		return "24hr Silent"
+	case LogEventPAAudible:
+		return "PA Audible"
+	case LogEventPASilent:
+		return "PA Silent"
+	case LogEventFire:
+		return "Fire Alarm"
+	case LogEventMedical:
+		return "Medical"
+	case LogEventTwentyFourHourGas:
+		return "24Hr Gas Alarm"
+	case LogEventAuxiliary:
+		return "Auxiliary Alarm"
+	case LogEventTamper:
+		return "24hr Tamper Alarm"
+	case LogEventExitTerminator:
+		return "Exit Terminator"
+	case LogEventMomentKey:
+		return "Keyswitch - Momentary"
+	case LogEventLatchKey:
+		return "Keyswitch - Latching"
+	case LogEventSecurity:
+		return "Security Key"
+	case LogEventOmitKey:
+		return "Omit Key"
+	case LogEventCustom:
+		return "Custom Alarm"
+	// Add more cases for other log event types
+	default:
+		return fmt.Sprintf("Unknown Log Event Type: %d", eventType)
+	}
 }
 
 func (t *Texecom) getZoneTypeDescription(zoneType ZoneType) string {
-    switch zoneType {
-    case ZoneTypeNotUsed:
-        return "Not used"
-    case ZoneTypeEntryExit1:
-        return "Entry/Exit 1"
-    case ZoneTypeEntryExit2:
-        return "Entry/Exit 2"
-    case ZoneTypeGuard:
-        return "Guard"
-    case ZoneTypeGuardAccess:
-        return "Guard Access"
-    case ZoneTypeTwentyFourHourAudible:
-        return "24Hr Audible"
-    case ZoneTypeTwentyFourHourSilent:
-        return "24Hr Silent"
-    case ZoneTypePAAudible:
-        return "PA Audible"
-    case ZoneTypePASilent:
-        return "PA Silent"
-    case ZoneTypeFire:
-        return "Fire"
-    case ZoneTypeMedical:
-        return "Medical"
-    case ZoneTypeTwentyFourHourGas:
-        return "24Hr Gas"
-    case ZoneTypeAuxiliary:
-        return "Auxiliary"
-    case ZoneTypeTamper:
-        return "Tamper"
-    // Add more cases for other zone types
-    default:
-        return fmt.Sprintf("Unknown Zone Type: %d", zoneType)
-    }
+	switch zoneType {
+	case ZoneTypeNotUsed:
+		return "Not used"
+	case ZoneTypeEntryExit1:
+		return "Entry/Exit 1"
+	case ZoneTypeEntryExit2:
+		return "Entry/Exit 2"
+	case ZoneTypeGuard:
+		return "Guard"
+	case ZoneTypeGuardAccess:
+		return "Guard Access"
+	case ZoneTypeTwentyFourHourAudible:
+		return "24Hr Audible"
+	case ZoneTypeTwentyFourHourSilent:
+		return "24Hr Silent"
+	case ZoneTypePAAudible:
+		return "PA Audible"
+	case ZoneTypePASilent:
+		return "PA Silent"
+	case ZoneTypeFire:
+		return "Fire"
+	case ZoneTypeMedical:
+		return "Medical"
+	case ZoneTypeTwentyFourHourGas:
+		return "24Hr Gas"
+	case ZoneTypeAuxiliary:
+		return "Auxiliary"
+	case ZoneTypeTamper:
+		return "Tamper"
+	// Add more cases for other zone types
+	default:
+		return fmt.Sprintf("Unknown Zone Type: %d", zoneType)
+	}
 }
 
 func (t *Texecom) getZoneStateDescription(zoneState ZoneState) string {
-    switch zoneState {
-    case ZoneStateSecure:
-        return "Secure"
-    case ZoneStateActive:
-        return "Active"
-    case ZoneStateTampered:
-        return "Tampered"
-    case ZoneStateShort:
-        return "Short"
-    default:
-        return fmt.Sprintf("Unknown Zone State: %d", zoneState)
-    }
+	switch zoneState {
+	case ZoneStateSecure:
+		return "Secure"
+	case ZoneStateActive:
+		return "Active"
+	case ZoneStateTampered:
+		return "Tampered"
+	case ZoneStateShort:
+		return "Short"
+	default:
+		return fmt.Sprintf("Unknown Zone State: %d", zoneState)
+	}
 }
 
 func (t *Texecom) getAreaStateDescription(areaState AreaState) string {
-    switch areaState {
-    case AreaStateDisarmed:
-        return "Disarmed"
-    case AreaStateInExit:
-        return "In Exit"
-    case AreaStateInEntry:
-        return "In Entry"
-    case AreaStateArmed:
-        return "Armed"
-    case AreaStatePartArmed:
-        return "Part Armed"
-    case AreaStateInAlarm:
-        return "In Alarm"
-    default:
-        return fmt.Sprintf("Unknown Area State: %d", areaState)
-    }
+	switch areaState {
+	case AreaStateDisarmed:
+		return "Disarmed"
+	case AreaStateInExit:
+		return "In Exit"
+	case AreaStateInEntry:
+		return "In Entry"
+	case AreaStateArmed:
+		return "Armed"
+	case AreaStatePartArmed:
+		return "Part Armed"
+	case AreaStateInAlarm:
+		return "In Alarm"
+	default:
+		return fmt.Sprintf("Unknown Area State: %d", areaState)
+	}
 }
 
 func (t *Texecom) logZoneEvent(event ZoneEvent) {
-    zoneState := t.getZoneStateDescription(event.ZoneState)
-    t.log.Info("Zone %d state changed to %s", event.ZoneNumber, zoneState)
+	zoneState := t.getZoneStateDescription(event.ZoneState)
+	t.log.Info("Zone %d state changed to %s", event.ZoneNumber, zoneState)
 }
 
 func (t *Texecom) logAreaEvent(event AreaEvent) {
-    areaState := t.getAreaStateDescription(event.AreaState)
-    t.log.Info("Area %d state changed to %s", event.AreaNumber, areaState)
+	areaState := t.getAreaStateDescription(event.AreaState)
+	t.log.Info("Area %d state changed to %s", event.AreaNumber, areaState)
 }
 
 func (t *Texecom) logLogEvent(event LogEvent) {
-    t.log.Info("Log Event: %s (Type: %d, Group: %d, Parameter: %d, Areas: %d, Time: %s)",
-        event.Description, event.Type, event.GroupType, event.Parameter, event.Areas, event.Time)
+	t.log.Info("Log Event: %s (Type: %d, Group: %d, Parameter: %d, Areas: %d, Time: %s)",
+		event.Description, event.Type, event.GroupType, event.Parameter, event.Areas, event.Time)
 }
