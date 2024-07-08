@@ -4,6 +4,7 @@ import (
 	"regexp"
 	"strings"
 	"unicode"
+	"math"
 
 	"golang.org/x/text/runes"
 	"golang.org/x/text/transform"

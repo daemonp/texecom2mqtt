@@ -15,35 +15,11 @@ type Panel struct {
     config     *config.Config
     log        *log.Logger
     texecom    *texecom.Texecom
-    areas      []Area
-    zones      []Zone
-    device     Device
+    areas      []texecom.Area
+    zones      []texecom.Zone
+    device     texecom.Device
     mu         sync.Mutex
     isLoggedIn bool
-}
-
-type Area struct {
-    ID     string
-    Name   string
-    Number int
-    Status texecom.AreaState
-    PartArm int
-}
-
-type Zone struct {
-    ID     string
-    Name   string
-    Number int
-    Type   texecom.ZoneType
-    Status texecom.ZoneState
-    Areas  []Area
-}
-
-type Device struct {
-    Model           string
-    SerialNumber    string
-    FirmwareVersion string
-    Zones           int
 }
 
 func NewPanel(cfg *config.Config, logger *log.Logger) *Panel {
@@ -219,15 +195,15 @@ func (p *Panel) updateAreaStates() error {
     return nil
 }
 
-func (p *Panel) Arm(area Area, armType texecom.ArmType) error {
+func (p *Panel) Arm(area texecom.Area, armType texecom.ArmType) error {
     return p.texecom.Arm(area.Number, armType)
 }
 
-func (p *Panel) Disarm(area Area) error {
+func (p *Panel) Disarm(area texecom.Area) error {
     return p.texecom.Disarm(area.Number)
 }
 
-func (p *Panel) Reset(area Area) error {
+func (p *Panel) Reset(area texecom.Area) error {
     return p.texecom.Reset(area.Number)
 }
 
@@ -239,19 +215,19 @@ func (p *Panel) SetLCDDisplay(text string) error {
     return p.texecom.SetLCDDisplay(text)
 }
 
-func (p *Panel) GetAreas() []Area {
+func (p *Panel) GetAreas() []texecom.Area {
     p.mu.Lock()
     defer p.mu.Unlock()
     return p.areas
 }
 
-func (p *Panel) GetZones() []Zone {
+func (p *Panel) GetZones() []texecom.Zone {
     p.mu.Lock()
     defer p.mu.Unlock()
     return p.zones
 }
 
-func (p *Panel) GetDevice() Device {
+func (p *Panel) GetDevice() texecom.Device {
     p.mu.Lock()
     defer p.mu.Unlock()
     return p.device
@@ -282,7 +258,8 @@ func (p *Panel) Disconnect() {
 }
 
 type CacheData struct {
-    Device Device
-    Areas  []Area
-    Zones  []Zone
+    Device texecom.Device
+    Areas  []texecom.Area
+    Zones  []texecom.Zone
 }
+

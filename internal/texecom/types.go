@@ -13,6 +13,8 @@ type Area struct {
     Number int
     Name   string
     ID     string
+    Status AreaState
+    PartArm int
 }
 
 type Zone struct {
@@ -20,6 +22,7 @@ type Zone struct {
     Name   string
     Type   ZoneType
     ID     string
+    Status ZoneState
 }
 
 type AreaStatus struct {
@@ -133,3 +136,15 @@ const (
     LogEventGroupTypeClose
     // Add more log event group types as needed
 )
+
+// Define ZoneBitmapData struct
+type ZoneBitmapData struct {
+    State          ZoneState
+    Fault          bool
+    FailedTest     bool
+    Alarmed        bool
+    ManualBypassed bool
+    AutoBypassed   bool
+    Masked         bool
+}
+

@@ -1,5 +1,7 @@
 package texecom
 
+import "fmt"
+
 // ArmTypeDescriptions maps ArmType to its string description
 var ArmTypeDescriptions = map[ArmType]string{
     ArmTypeFull:     "Full Arm",
@@ -50,16 +52,22 @@ var LogEventTypeDescriptions = map[LogEventType]string{
     LogEventTypeEntryExit2:            "Entry/Exit 2",
     LogEventTypeGuard:                 "Guard",
     LogEventTypeGuardAccess:           "Guard Access",
-    LogEventTypeTwentyFourHourAudible: "24hr Audible",
-    LogEventTypeTwentyFourHourSilent:  "24hr Silent",
-    LogEventTypePAAudible:             "Audible PA",
-    LogEventTypePASilent:              "Silent PA",
-    LogEventTypeFire:                  "Fire Alarm",
-    LogEventTypeMedical:               "Medical",
-    LogEventTypeTwentyFourHourGas:     "24Hr Gas Alarm",
-    LogEventTypeAuxiliary:             "Auxiliary Alarm",
-    LogEventTypeTamper:                "24hr Tamper Alarm",
-    // Add more log event type descriptions as needed
+    LogEventTwentyFourHourAudible:     "24hr Audible",
+    LogEventTwentyFourHourSilent:      "24hr Silent",
+    LogEventPAAudible:                 "PA Audible",
+    LogEventPASilent:                  "PA Silent",
+    LogEventFire:                      "Fire Alarm",
+    LogEventMedical:                   "Medical",
+    LogEventTwentyFourHourGas:         "24Hr Gas Alarm",
+    LogEventAuxiliary:                 "Auxiliary Alarm",
+    LogEventTamper:                    "24hr Tamper Alarm",
+    LogEventExitTerminator:            "Exit Terminator",
+    LogEventMomentKey:                 "Keyswitch - Momentary",
+    LogEventLatchKey:                  "Keyswitch - Latching",
+    LogEventSecurity:                  "Security Key",
+    LogEventOmitKey:                   "Omit Key",
+    LogEventCustom:                    "Custom Alarm",
+    // Add more cases for other log event types
 }
 
 // GetAreaStatus returns a string description of the area status
@@ -70,3 +78,4 @@ func GetAreaStatus(area Area) string {
     }
     return status
 }
+
