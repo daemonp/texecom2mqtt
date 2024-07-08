@@ -1,3 +1,5 @@
+# Note: This is not functional am having issues logging in
+
 # texecom2mqtt
 
 texecom2mqtt is a Go application that bridges Texecom alarm systems with MQTT, enabling integration with home automation systems like Home Assistant. It provides real-time updates on the status of your Texecom alarm system and allows you to control it remotely via MQTT messages.

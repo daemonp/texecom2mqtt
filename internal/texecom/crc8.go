@@ -1,6 +1,5 @@
 package texecom
 
-// CRC8 calculates the 8-bit CRC for Texecom messages
 func CRC8(data []byte) byte {
     crc := byte(0xFF) // Initial value
     for _, b := range data {
